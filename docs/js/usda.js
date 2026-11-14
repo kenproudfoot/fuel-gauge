@@ -255,10 +255,11 @@ export function foodFromFdc(record) {
 /**
  * Fill the values USDA lacked from an AI estimate of the same food.
  * `aiFood` is per its own serving; it is scaled by weight to the USDA serving.
- * Filled fields are marked 'ai' in `origins`, so they show as estimated.
+ * Filled fields are marked with `origin` ('ai' by default, so they show as
+ * estimated; 'usda' when the other food is a USDA record).
  * Returns a new lookup; unchanged if the two servings cannot be compared.
  */
-export function mergeEstimates(lookup, aiFood) {
+export function mergeEstimates(lookup, aiFood, origin = 'ai') {
   if (!aiFood || lookup.missing.length === 0) return lookup;
   const grams = gramsPerServing(lookup.food);
   let scale = grams ? servingsFor(aiFood, grams, 'g') : null;
@@ -273,15 +274,15 @@ export function mergeEstimates(lookup, aiFood) {
     const value = finite(aiFood[n.key]);
     if (value == null || value < 0) continue;
     food[n.key] = round2(value * scale);
-    origins[n.key] = 'ai';
+    origins[n.key] = origin;
     filled.push(n.name.toLowerCase());
   }
   if (food.effective_carbs_g == null && finite(aiFood.effective_carbs_g) != null && aiFood.effective_carbs_g >= 0) {
     food.effective_carbs_g = round2(aiFood.effective_carbs_g * scale);
-    origins.effective_carbs_g = 'ai';
+    origins.effective_carbs_g = origin;
     filled.push('effective carbs');
   }
-  if (filled.length) food.notes = `${food.notes}; AI estimate: ${filled.join(', ')}`;
+  if (filled.length) food.notes = `${food.notes}; ${origin === 'usda' ? 'from USDA' : 'AI estimate'}: ${filled.join(', ')}`;
   return { ...lookup, food, origins, missing: NUTRIENTS.filter((n) => food[n.key] == null).map((n) => n.key) };
 }
 
@@ -340,7 +341,7 @@ const DATA_TYPE_LABEL = {
 /**
  * Pick what to offer from a search reply: one record per barcode (the newest),
  * closest matches to the words first, at most `limit`.
- * Each: { fdcId, title, detail, dataType }
+ * Each: { fdcId, title, detail, dataType, score } (score: share of the words matched)
  */
 export function pickCandidates(query, foods, limit = 8) {
   const newest = new Map();
@@ -361,7 +362,7 @@ export function pickCandidates(query, foods, limit = 8) {
   });
   const close = scored.filter((s) => s.score >= 0.5);
   const kept = (close.length ? close : scored.slice(0, 3)).sort((a, b) => b.score - a.score || a.index - b.index);
-  return kept.slice(0, limit).map(({ record }) => {
+  return kept.slice(0, limit).map(({ record, score }) => {
     const branded = record.dataType === 'Branded';
     const size = finite(record.servingSize);
     const unit = baseUnit(record);
@@ -374,6 +375,7 @@ export function pickCandidates(query, foods, limit = 8) {
       title: foodTitle(record),
       detail: [branded && tidyCase(record.brandOwner), serving, kind].filter(Boolean).join(' · '),
       dataType: String(record.dataType || ''),
+      score,
     };
   });
 }

@@ -61,3 +61,25 @@ export async function readZip(file) {
   }
   return { texts, binaries };
 }
+
+/**
+ * Shrink a photo to at most `max` pixels on its long side and return it as a
+ * JPEG data: URL. Keeps uploads small and drops the photo's metadata (such as
+ * location), since only the pixels are redrawn.
+ */
+export async function photoToDataUrl(file, max = 1600) {
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    const scale = Math.min(1, max / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.85);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}

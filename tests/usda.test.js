@@ -290,3 +290,19 @@ test('testUsdaKey reports success and failure without throwing', async () => {
 test('the record link points at the USDA page', () => {
   assert.equal(usdaFoodUrl(123), 'https://fdc.nal.usda.gov/food-details/123/nutrients');
 });
+
+test('mergeEstimates can fill from a USDA record, marked as USDA', () => {
+  // A label read from a photo: phosphorus is not printed.
+  const label = { food: { name: 'Waffle', serving_amount: 1, serving_unit: 'each', grams_per_serving: 55, calories: 160, protein_g: 3, sodium_mg: 270, potassium_mg: 30, phosphorus_mg: null, effective_carbs_g: 21, notes: 'Read from a label photo' }, missing: ['phosphorus_mg'], origins: { calories: 'label' } };
+  const merged = mergeEstimates(label, foodFromFdc(BRANDED).food, 'usda');
+  assert.equal(merged.food.phosphorus_mg, 100.1);
+  assert.equal(merged.origins.phosphorus_mg, 'usda');
+  assert.equal(merged.food.calories, 160);
+  assert.deepEqual(merged.missing, []);
+  assert.match(merged.food.notes, /from USDA: phosphorus$/);
+});
+
+test('candidates carry their match score', () => {
+  const picks = pickCandidates('eggo thick and fluffy waffle', SEARCH.foods);
+  assert.equal(picks[0].score, 1);
+});

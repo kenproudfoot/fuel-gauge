@@ -236,3 +236,77 @@ test('a network failure during lookup surfaces as offline, with no retry', async
   await assert.rejects(lookupFood(openai, { food: 'pecans' }, { fetch }), { kind: 'network' });
   assert.equal(fetch.calls.length, 1);
 });
+
+// --- label photo -----------------------------------------------------------
+import { validateLabel, readLabel, LABEL_SYSTEM_PROMPT } from '../docs/js/ai.js';
+
+const LABEL = {
+  name: '', serving_amount: 1, serving_unit: 'each', grams_per_serving: 55, calories: 160, protein_g: 3, sodium_mg: 270,
+  potassium_mg: 30, phosphorus_mg: null, total_carbs_g: 22, fiber_g: 0.5, ingredients_visible: true, phosphate_additives: true, notes: '',
+};
+const chatReply = (content) => ({ json: { choices: [{ message: { content: typeof content === 'string' ? content : JSON.stringify(content) } }] } });
+
+test('validateLabel keeps printed values, leaves the rest missing, and marks origins', () => {
+  const { ok, food, missing, origins } = validateLabel(LABEL, 'eggo waffle');
+  assert.equal(ok, true);
+  assert.equal(food.name, 'eggo waffle'); // nothing printed, so what was typed is used
+  assert.deepEqual([food.serving_amount, food.serving_unit, food.grams_per_serving], [1, 'each', 55]);
+  assert.equal(food.phosphorus_mg, null);
+  assert.deepEqual(missing, ['phosphorus_mg']);
+  assert.equal(food.effective_carbs_g, 21.5);
+  assert.equal(origins.calories, 'label');
+  assert.equal(origins.phosphorus_mg, undefined);
+  assert.equal(origins.effective_carbs_g, 'label');
+  assert.equal(food.phosphate_additives, true);
+  assert.equal(origins.phosphate_additives, 'label');
+  assert.match(food.notes, /^Read from a label photo/);
+});
+
+test('validateLabel prefers a printed name and allows none at all', () => {
+  assert.equal(validateLabel({ ...LABEL, name: 'Thick & Fluffy Waffles' }, 'typed').food.name, 'Thick & Fluffy Waffles');
+  const unnamed = validateLabel(LABEL);
+  assert.equal(unnamed.ok, true);
+  assert.equal(unnamed.food.name, '');
+});
+
+test('validateLabel does not claim additives without a readable ingredient list', () => {
+  for (const reply of [{ ...LABEL, ingredients_visible: false }, { ...LABEL, phosphate_additives: null }]) {
+    const { food, origins } = validateLabel(reply);
+    assert.equal(food.phosphate_additives, false);
+    assert.equal(origins.phosphate_additives, undefined);
+  }
+});
+
+test('validateLabel rejects a photo that is not a label, or has no values', () => {
+  const not = validateLabel({ not_a_label: true });
+  assert.equal(not.ok, false);
+  assert.equal(not.notLabel, true);
+  assert.equal(validateLabel({ name: 'x', serving_amount: 1, serving_unit: 'each' }).ok, false);
+  assert.equal(validateLabel(null).ok, false);
+});
+
+test('readLabel sends the photo as an image part and returns the lookup', async () => {
+  const fetch = fakeFetch(chatReply(LABEL));
+  const photo = 'data:image/jpeg;base64,AAAA';
+  const lookup = await readLabel(openai, photo, 'eggo waffle', { fetch });
+  assert.equal(lookup.food.calories, 160);
+  assert.deepEqual(lookup.missing, ['phosphorus_mg']);
+  const { body } = fetch.calls[0];
+  assert.deepEqual(Object.keys(body), ['model', 'messages']);
+  assert.equal(body.messages[0].content, LABEL_SYSTEM_PROMPT);
+  assert.deepEqual(body.messages[1].content[1], { type: 'image_url', image_url: { url: photo } });
+});
+
+test('readLabel explains a photo that is not a label', async () => {
+  const fetch = fakeFetch(chatReply({ not_a_label: true }), chatReply({ not_a_label: true }));
+  await assert.rejects(readLabel(openai, 'data:image/jpeg;base64,AAAA', '', { fetch }), (error) => {
+    assert.equal(error.kind, 'format');
+    assert.match(error.message, /doesn't look like a nutrition label/);
+    return true;
+  });
+});
+
+test('the label prompt forbids estimating and any dosing talk', () => {
+  assert.match(LABEL_SYSTEM_PROMPT, /Never estimate/);
+  assert.match(LABEL_SYSTEM_PROMPT, /Never mention insulin, doses, dosing, ratios or corrections/);
+});

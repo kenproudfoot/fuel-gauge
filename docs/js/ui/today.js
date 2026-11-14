@@ -24,11 +24,14 @@ import { renderChartSVG } from '../chart.js';
 import { parseInput } from '../parser.js';
 import { matchFoods, scoreName } from '../fuzzy.js';
 import { createVoice } from './voice.js';
-import { isConfigured, lookupFood, parseWithAi, gramsFor } from '../ai.js';
+import { isConfigured, lookupFood, parseWithAi, gramsFor, readLabel } from '../ai.js';
+import { photoToDataUrl } from './files.js';
 import { createConfirmCard } from './confirmCard.js';
 import { usdaConfigured, searchFoods, fetchFood, foodFromFdc, mergeEstimates, gramsFromPortions } from '../usda.js';
 
 const UNDO_MS = 10000;
+const CAMERA_ICON =
+  '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13.5" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
 const PLACEHOLDER = '12 g candied pecans';
 const MIC_ICON =
   '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8.5 21h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
@@ -56,6 +59,31 @@ export function createTodayView(context) {
   });
   const micButton = el('button', { class: 'mic', type: 'button', 'aria-label': 'Speak' });
   micButton.innerHTML = MIC_ICON; // static markup defined above
+  // Label photo: the iPhone camera (or photo library) through a plain file input.
+  const photoInput = el('input', { class: 'visually-hidden', type: 'file', accept: 'image/*', tabIndex: -1, 'aria-hidden': 'true' });
+  photoInput.setAttribute('capture', 'environment');
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files?.[0];
+    photoInput.value = ''; // so the same photo can be chosen again
+    if (file) readLabelPhoto(file);
+  });
+  const cameraButton = el('button', {
+    class: 'mic',
+    type: 'button',
+    'aria-label': 'Photograph a nutrition label',
+    onclick: () => {
+      if (!isConfigured(aiConfig())) {
+        return respond(
+          noticeCard(
+            'Reading a label photo uses AI lookup, which is not set up yet.',
+            el('button', { class: 'btn', type: 'button', text: 'Set up AI lookup', onclick: () => goTo('settings') }),
+          ),
+        );
+      }
+      return photoInput.click();
+    },
+  });
+  cameraButton.innerHTML = CAMERA_ICON; // static markup defined above
   const responseBox = el('div');
   const entriesBox = el('div');
   const sheetHost = el('div');
@@ -77,6 +105,8 @@ export function createTodayView(context) {
       },
       input,
       micButton,
+      cameraButton,
+      photoInput,
     ),
     responseBox,
     entriesBox,
@@ -412,6 +442,49 @@ export function createTodayView(context) {
     return showConfirm(lookup, command, asked, note);
   }
 
+  /**
+   * A photo of a nutrition label: the AI copies the printed values, and USDA
+   * (when a key is set) supplies what labels leave out, phosphorus above all.
+   * Anything typed in the field first ("2 eggo waffles") gives the amount and name.
+   */
+  async function readLabelPhoto(file) {
+    const typed = parseInput(input.value);
+    const said = typed.type === 'log' ? typed : { type: 'log', amount: null, unit: null, food: '' };
+    let lookup;
+    try {
+      lookup = await withAi('Reading the label…', async (deps) => {
+        const photo = await photoToDataUrl(file);
+        return { ...(await readLabel(aiConfig(), photo, said.food, deps)), photo };
+      });
+    } catch (error) {
+      if (error.kind === 'cancelled') return respond();
+      return respond(noticeCard(error.kind ? error.message : 'That photo could not be opened. Try taking it again.'));
+    }
+
+    const name = lookup.food.name;
+    if (lookup.missing.length && name && usdaConfigured(usdaConfig())) {
+      const lacking = NUTRIENTS.filter((n) => lookup.missing.includes(n.key)).map((n) => n.name.toLowerCase()).join(', ');
+      try {
+        await withAi(`Checking USDA for ${lacking}…`, async (deps) => {
+          const [best] = await searchFoods(usdaConfig(), name, deps);
+          // Only a close match by name is trusted to stand in for this product.
+          if (!best || best.score < 0.75) return;
+          const usda = foodFromFdc(await fetchFood(usdaConfig(), best.fdcId, deps));
+          if (!usda) return;
+          const merged = mergeEstimates(lookup, usda.food, 'usda');
+          if (merged.missing.length < lookup.missing.length) {
+            // Keep the record number with the food, so the value can be traced later.
+            merged.food.notes = `${merged.food.notes} (USDA FoodData Central ${usda.ref.fdcId})`;
+            lookup = { ...merged, extraSource: { url: usda.ref.url, text: `USDA record ${usda.ref.fdcId}: ${usda.food.name}` } };
+          }
+        });
+      } catch {
+        // USDA unavailable or cancelled: those fields stay blank to fill in.
+      }
+    }
+    return showConfirm(lookup, said, said, null);
+  }
+
   /** Ask the AI for the food. `reason` is shown while it works (e.g. why USDA was skipped). */
   async function lookUpWithAi(command, reason) {
     let lookup;
@@ -436,7 +509,7 @@ export function createTodayView(context) {
    * converted to grams.
    */
   function showConfirm(lookup, command, asked, note) {
-    const fromUsda = Boolean(lookup.ref);
+    const origin = lookup.photo ? 'label' : lookup.ref ? 'usda' : 'ai';
     respond(
       createConfirmCard({
         lookup,
@@ -446,9 +519,9 @@ export function createTodayView(context) {
         onLogSave: async (result) => {
           // Confirmed by me: saved to my foods with where it came from, and what I said as an alias.
           let name = result.name;
-          if (foods.some((f) => f.name.trim().toLowerCase() === name.toLowerCase())) name = `${name} (${fromUsda ? 'USDA' : 'AI'})`;
-          const alias = command.food.toLowerCase() === name.toLowerCase() ? [] : [command.food];
-          const food = await store.putFood({ ...result.food, name, aliases: alias, source: fromUsda ? 'usda-confirmed' : 'ai-confirmed' });
+          if (foods.some((f) => f.name.trim().toLowerCase() === name.toLowerCase())) name = `${name} (${origin === 'ai' ? 'AI' : origin === 'usda' ? 'USDA' : 'label'})`;
+          const alias = !command.food || command.food.toLowerCase() === name.toLowerCase() ? [] : [command.food];
+          const food = await store.putFood({ ...result.food, name, aliases: alias, source: `${origin}-confirmed` });
           clearInput();
           await saveNewEntry(food, { ...result, ts: Date.now() });
         },
@@ -457,7 +530,7 @@ export function createTodayView(context) {
           // when any of its values is an AI estimate.
           clearInput();
           await saveNewEntry(
-            { id: null, name: result.name, source: fromUsda ? 'usda' : 'ai', phosphate_additives: result.food.phosphate_additives },
+            { id: null, name: result.name, source: origin, phosphate_additives: result.food.phosphate_additives },
             { ...result, ts: Date.now() },
             result.estimated,
           );

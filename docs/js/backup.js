@@ -38,7 +38,7 @@ function fromCsv(text) {
   });
 }
 
-const ENTRY_SOURCES = ['me', 'ai-confirmed', 'usda-confirmed', 'ai', 'usda'];
+const ENTRY_SOURCES = ['me', 'ai-confirmed', 'usda-confirmed', 'label-confirmed', 'ai', 'usda', 'label'];
 const num = (text) => (text === '' || text == null ? null : Number(text));
 const bool = (text) => text === 'true';
 

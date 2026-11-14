@@ -28,6 +28,7 @@ Built in phases.
 - [x] **3. Voice and parser**: speech and text input, fuzzy food matching, foods-file import/export
 - [x] **4. AI lookup**: nutrition lookup for unknown foods, with confirm-before-save
 - [x] **4b. USDA lookup**: sourced values from USDA FoodData Central, with a link to the record
+- [x] **4c. Label photo**: photograph a Nutrition Facts label and have the values read into the confirm card
 - [x] **5. Days and backup**: 2 AM rollover snapshots, history, zip backup and restore (done ahead of phase 4)
 - [ ] **6. Trend indicator**
 
@@ -89,6 +90,19 @@ records over the years, so the newest one is fetched. Foods saved from here have
 the source `usda-confirmed` and keep the record number in their notes. Only the
 food words are sent to USDA, and the key is stored and protected the same way
 as the AI key.
+
+## Label photo
+
+The camera button on Today photographs a Nutrition Facts label. The photo is
+shrunk (which also drops its metadata), sent to the configured AI provider, and
+the model copies the printed values: it is told never to estimate, and to leave
+anything unprinted blank. The confirm card shows the photo above the values so
+each number can be checked, with every value tagged **label**. Phosphorus is
+rarely on a label, so when a USDA key is set and the product has a name (typed
+before the photo, or printed in it), a closely matching USDA record supplies the
+missing values, tagged **USDA** with a link; otherwise they stay blank to fill
+in. The photo is not stored. Foods saved this way have the source
+`label-confirmed`. The model must accept images.
 
 ## AI lookup
 

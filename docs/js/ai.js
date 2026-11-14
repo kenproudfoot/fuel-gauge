@@ -205,6 +205,34 @@ export const CONVERT_SYSTEM_PROMPT = `You convert a kitchen measure of a food to
 - "notes" is at most 120 characters on the assumption used.
 Never mention insulin, doses, dosing, ratios or corrections, and give no medical advice.`;
 
+export const LABEL_SYSTEM_PROMPT = `You read a photo of a packaged food's Nutrition Facts label for a food-logging app. Reply with ONE JSON object and nothing else: no prose, no markdown, no code fences.
+
+Copy ONLY what is printed in the photo. Never estimate, never fill a value in from memory, and use null for anything that is not printed or that you cannot read with confidence.
+
+If the photo does not show a nutrition label you can read, reply: {"not_a_label": true}
+
+Otherwise reply with these keys (all required):
+  "name": string, the product name if it is printed in the photo, otherwise ""
+  "serving_amount": number > 0, from the label's serving size
+  "serving_unit": one of "g", "oz", "lb", "cup", "tbsp", "tsp", "ml", "each", "slice", "piece" (use "each" for a counted item such as "1 waffle" or "12 chips")
+  "grams_per_serving": number or null, the serving weight in grams when the label prints it, e.g. "1 waffle (55g)"
+  "calories": number or null
+  "protein_g": number or null
+  "sodium_mg": number or null
+  "potassium_mg": number or null
+  "phosphorus_mg": number or null
+  "total_carbs_g": number or null
+  "fiber_g": number or null
+  "ingredients_visible": true or false, whether an ingredient list can be read in the photo
+  "phosphate_additives": true if a readable ingredient list has any ingredient containing "phos", false if a readable list has none, null if no ingredient list can be read
+  "notes": string, at most 160 characters: anything that was hard to read
+
+Rules:
+- All numbers are for ONE serving as printed. If the label has several columns (per serving and per container, or as packaged and as prepared), use the per-serving, as-packaged column.
+- A value printed only as a percent Daily Value may be converted with the FDA Daily Values: potassium %DV x 4700 mg, phosphorus %DV x 1250 mg, sodium %DV x 2300 mg. Say so in "notes".
+- "<1 g" is 0.5. Use numbers, not strings.
+- Never mention insulin, doses, dosing, ratios or corrections, and give no medical advice. Report what is printed only.`;
+
 // --- reading replies -------------------------------------------------------
 
 /** Pull the JSON object out of a reply, tolerating code fences or stray text around it. */
@@ -294,6 +322,32 @@ export function validateLookup(reply) {
   // A reply with no nutrient numbers at all is not a lookup.
   if (missing.length === NUTRIENTS.length) errors.push('no nutrient values were given');
   return { ok: errors.length === 0, food: errors.length === 0 ? food : null, missing, errors };
+}
+
+/**
+ * Check a label-photo reply. Returns { ok, food, missing, origins, errors }.
+ * Values the label did not print are null and listed in `missing`. `origins`
+ * marks what was read from the photo as 'label'. `fallbackName` is used when
+ * the photo shows no product name.
+ */
+export function validateLabel(reply, fallbackName = '') {
+  if (reply && typeof reply === 'object' && reply.not_a_label === true) {
+    return { ok: false, notLabel: true, food: null, missing: [], origins: {}, errors: ['the photo is not a readable nutrition label'] };
+  }
+  const named = String(reply?.name ?? '').trim();
+  // The lookup check needs a name; a label photo often has none, which is fine.
+  const result = validateLookup({ ...(reply || {}), name: named || fallbackName || 'unnamed', brand: null, confidence: 'high' });
+  if (!result.ok) return { ...result, origins: {} };
+  const food = { ...result.food, name: named || fallbackName, confidence: undefined };
+  const origins = {};
+  for (const n of NUTRIENTS) if (food[n.key] != null) origins[n.key] = 'label';
+  if (food.effective_carbs_g != null) origins.effective_carbs_g = 'label';
+  // Additives are only known when an ingredient list was actually read.
+  const listRead = reply.ingredients_visible === true && typeof reply.phosphate_additives === 'boolean';
+  food.phosphate_additives = listRead ? reply.phosphate_additives : false;
+  if (listRead) origins.phosphate_additives = 'label';
+  food.notes = ['Read from a label photo', food.notes].filter(Boolean).join('; ');
+  return { ok: true, food, missing: result.missing, origins, errors: [] };
 }
 
 /** Check a parse reply. Returns a parser-style command, or null if the text was not a food. */
@@ -390,4 +444,37 @@ export function gramsFor(config, query, deps = {}) {
     },
     deps,
   );
+}
+
+/**
+ * Read a nutrition label from a photo. `imageDataUrl` is a data: URL (JPEG).
+ * Returns { food, missing, origins }; throws AiError('format') when the photo
+ * is not a readable label. Needs a model that accepts images.
+ */
+export async function readLabel(config, imageDataUrl, fallbackName = '', deps = {}) {
+  let notLabel = false;
+  try {
+    return await askForJson(
+      config,
+      [
+        { role: 'system', content: LABEL_SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Read this nutrition label.' },
+            { type: 'image_url', image_url: { url: imageDataUrl } },
+          ],
+        },
+      ],
+      (reply) => {
+        const result = validateLabel(reply, fallbackName);
+        notLabel = Boolean(result.notLabel);
+        return { ok: result.ok, value: { food: result.food, missing: result.missing, origins: result.origins }, problem: result.errors.join('; ') || 'not valid JSON' };
+      },
+      deps,
+    );
+  } catch (error) {
+    if (error.kind === 'format' && notLabel) throw new AiError('format', "That photo doesn't look like a nutrition label the AI could read. Try again closer, flat and in good light.");
+    throw error;
+  }
 }

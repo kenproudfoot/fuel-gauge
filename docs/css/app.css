@@ -390,6 +390,7 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 }
 .field-label .badge { font-size: 11px; padding: 0 6px; margin-left: 2px; }
 /* A sourced value: quiet, so the yellow "estimated" tags stand out */
+.label-photo { display: block; width: 100%; max-height: 60vh; object-fit: contain; border-radius: 12px; margin: 4px 0 10px; }
 .badge.plain { color: var(--muted); border-color: var(--muted); }
 .card a { color: inherit; }
 .food-pick.stacked { flex-direction: column; align-items: flex-start; gap: 2px; padding-top: 8px; padding-bottom: 8px; text-align: left; }

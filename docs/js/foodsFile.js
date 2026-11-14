@@ -11,7 +11,7 @@ export const COLUMNS = [
   'sodium_mg', 'potassium_mg', 'phosphorus_mg', 'effective_carbs_g', 'phosphate_additives', 'source', 'notes',
 ];
 /** Where a saved food's values came from. Values typed or edited by hand are 'me'. */
-export const FOOD_SOURCES = ['me', 'ai-confirmed', 'usda-confirmed'];
+export const FOOD_SOURCES = ['me', 'ai-confirmed', 'usda-confirmed', 'label-confirmed'];
 const foodSource = (value) => {
   const source = String(value ?? '').trim().toLowerCase();
   return FOOD_SOURCES.includes(source) ? source : 'me';

@@ -26,7 +26,8 @@ const round2 = (x) => Math.round(x * 100) / 100;
  *   per-serving record to save.
  */
 export function createConfirmCard({ lookup, command, note, onLogSave, onLogOnce, onCancel }) {
-  const { food, ref } = lookup;
+  const { food, ref, photo } = lookup;
+  const sourced = Boolean(ref || photo); // values with a source, not an AI estimate
   const origins = lookup.origins || {};
 
   // Scale to what was said; if that can't be converted, show one serving and say so.
@@ -54,7 +55,9 @@ export function createConfirmCard({ lookup, command, note, onLogSave, onLogOnce,
   const tag = (key) =>
     origins[key] === 'usda'
       ? el('span', { class: 'badge plain', text: 'USDA' })
-      : el('span', { class: 'badge', text: ref && origins[key] !== 'ai' ? 'not in USDA' : 'estimated' });
+      : origins[key] === 'label'
+        ? el('span', { class: 'badge plain', text: 'label' })
+        : el('span', { class: 'badge', text: sourced && origins[key] !== 'ai' ? (photo ? 'not on label' : 'not in USDA') : 'estimated' });
   const numberInput = (value, label) =>
     el('input', {
       class: 'big-input',
@@ -114,7 +117,7 @@ export function createConfirmCard({ lookup, command, note, onLogSave, onLogOnce,
           : round2(nutrients.effective_carbs_g / servings);
     // Still an estimate if any AI value was accepted as it stood.
     const aiKept = Object.keys(inputs).some((key) => origins[key] === 'ai' && untouched(key));
-    return { name, amount, unit, servings, nutrients, food: perServing, estimated: ref ? aiKept : true };
+    return { name, amount, unit, servings, nutrients, food: perServing, estimated: sourced ? aiKept : true };
   };
 
   const act = (handler) => async (event) => {
@@ -129,15 +132,24 @@ export function createConfirmCard({ lookup, command, note, onLogSave, onLogOnce,
     'form',
     { class: 'card confirm', onsubmit: act(onLogSave) },
     el('h2', { text: 'Check these values' }),
-    el('p', { class: 'muted', text: `${ref ? 'USDA values' : 'AI estimate'} for ${formatAmount(amount, unit)}. Nothing is logged until you choose.` }),
+    el('p', { class: 'muted', text: `${photo ? 'Read from your label photo' : ref ? 'USDA values' : 'AI estimate'} for ${formatAmount(amount, unit)}. ${photo ? 'Check each number against the photo. ' : ''}Nothing is logged until you choose.` }),
+    photo && el('img', { class: 'label-photo', src: photo, alt: 'The label photo' }),
     note && el('p', { class: 'muted small-text', text: note }),
     conversionNote && el('div', { class: 'notice', text: conversionNote }),
     lookup.missing.length > 0 &&
-      el('div', { class: 'notice', text: `${ref ? 'USDA has no value for some of these' : 'The AI left some values blank'}. Fill them in from the label.` }),
+      el('div', { class: 'notice', text: photo ? 'Some values are not on the label (phosphorus rarely is). Fill them in if you know them.' : `${ref ? 'USDA has no value for some of these' : 'The AI left some values blank'}. Fill them in from the label.` }),
     el('label', { class: 'field' }, el('span', { class: 'field-label', text: 'Food' }), nameInput),
     el('div', { class: 'grid-2' }, rows, el('label', { class: 'field' }, el('span', { class: 'field-label' }, 'Effective carbs (g) ', tag('effective_carbs_g')), inputs.effective_carbs_g)),
     el('label', { class: 'check' }, additives, el('span', {}, 'Contains phosphate additives ', tag('phosphate_additives'))),
-    ref
+    photo
+      ? el(
+          'p',
+          { class: 'muted small-text' },
+          `${food.notes}.`,
+          lookup.extraSource && ' ',
+          lookup.extraSource && el('a', { href: lookup.extraSource.url, target: '_blank', rel: 'noopener noreferrer', text: lookup.extraSource.text }),
+        )
+      : ref
       ? el(
           'p',
           { class: 'muted small-text' },
