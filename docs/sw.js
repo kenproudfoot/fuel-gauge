@@ -3,7 +3,7 @@
 // the phone download the new files and offer "Update available, tap to reload".
 // tests/sw.test.js checks that VERSION and ASSETS stay in step with docs/.
 
-const VERSION = '0.5.0';
+const VERSION = '0.5.1';
 const CACHE = `fuel-gauge-${VERSION}`;
 
 const ASSETS = [

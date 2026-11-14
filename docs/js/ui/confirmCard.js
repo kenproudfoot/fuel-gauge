@@ -57,6 +57,9 @@ export function createConfirmCard({ lookup, command, onLogSave, onLogOnce, onCan
   });
   inputs.effective_carbs_g = numberInput(scaled.effective_carbs_g, 'Effective carbs');
   inputs.effective_carbs_g.placeholder = 'blank = unknown';
+  // What each field showed at first, so untouched values keep their exact figures.
+  const shown = Object.fromEntries(Object.entries(inputs).map(([key, input]) => [key, input.value]));
+  const untouched = (key) => inputs[key].value === shown[key] && food[key] != null;
   const additives = el('input', { type: 'checkbox', checked: Boolean(food.phosphate_additives) });
   const notice = el('div', { class: 'notice', hidden: true });
 
@@ -66,12 +69,12 @@ export function createConfirmCard({ lookup, command, onLogSave, onLogOnce, onCan
     if (!name) errors.push('Give the food a name.');
     const nutrients = {};
     for (const n of NUTRIENTS) {
-      const value = parseNumber(inputs[n.key].value);
+      const value = untouched(n.key) ? scaled[n.key] : parseNumber(inputs[n.key].value);
       if (!(value >= 0)) errors.push(`${n.name} needs a number (0 or more).`);
       nutrients[n.key] = value;
     }
     const carbsText = inputs.effective_carbs_g.value.trim();
-    nutrients.effective_carbs_g = carbsText === '' ? null : parseNumber(carbsText);
+    nutrients.effective_carbs_g = carbsText === '' ? null : untouched('effective_carbs_g') ? scaled.effective_carbs_g : parseNumber(carbsText);
     if (carbsText !== '' && !(nutrients.effective_carbs_g >= 0)) errors.push('Effective carbs needs a number, or blank if unknown.');
     if (errors.length) {
       notice.replaceChildren(...errors.map((message) => el('div', { text: message })));
@@ -87,8 +90,13 @@ export function createConfirmCard({ lookup, command, onLogSave, onLogOnce, onCan
       phosphate_additives: additives.checked,
       notes: food.notes,
     };
-    for (const n of NUTRIENTS) perServing[n.key] = round2(nutrients[n.key] / servings);
-    perServing.effective_carbs_g = nutrients.effective_carbs_g == null ? null : round2(nutrients.effective_carbs_g / servings);
+    for (const n of NUTRIENTS) perServing[n.key] = untouched(n.key) ? food[n.key] : round2(nutrients[n.key] / servings);
+    perServing.effective_carbs_g =
+      nutrients.effective_carbs_g == null
+        ? null
+        : untouched('effective_carbs_g')
+          ? food.effective_carbs_g
+          : round2(nutrients.effective_carbs_g / servings);
     return { name, amount, unit, servings, nutrients, food: perServing };
   };
 
