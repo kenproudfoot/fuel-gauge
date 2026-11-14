@@ -3,12 +3,13 @@
 // the phone download the new files and offer "Update available, tap to reload".
 // tests/sw.test.js checks that VERSION and ASSETS stay in step with docs/.
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 const CACHE = `fuel-gauge-${VERSION}`;
 
 const ASSETS = [
   './',
   'index.html',
+  'example-foods.txt',
   'manifest.webmanifest',
   'css/app.css',
   'icons/apple-touch-icon.png',
@@ -18,7 +19,10 @@ const ASSETS = [
   'js/app.js',
   'js/chart.js',
   'js/day.js',
+  'js/foodsFile.js',
+  'js/fuzzy.js',
   'js/nutrients.js',
+  'js/parser.js',
   'js/store.js',
   'js/units.js',
   'js/version.js',
@@ -26,6 +30,7 @@ const ASSETS = [
   'js/ui/foods.js',
   'js/ui/settings.js',
   'js/ui/today.js',
+  'js/ui/voice.js',
 ];
 
 self.addEventListener('install', (event) => {

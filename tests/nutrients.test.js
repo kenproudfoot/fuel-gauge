@@ -225,3 +225,15 @@ test('last entry is the most recently logged, not the latest eaten', () => {
   assert.equal(lastLoggedEntry([]), null);
   assert.equal(lastLoggedEntry([{ id: 'x', ts: 1, deleted: true }]), null);
 });
+
+import { remainingLines } from '../docs/js/nutrients.js';
+
+test('"what\'s left" reports room, goals reached and limits exceeded', () => {
+  const totals = { calories: 1180, protein_g: 25.4, sodium_mg: 2705, potassium_mg: 2000, phosphorus_mg: 0 };
+  const lines = remainingLines(totals, DEFAULT_SETTINGS.targets);
+  assert.deepEqual(lines.map((l) => l.text), ['970 kcal to go', '29.6 g left', 'over by 705 mg', '0 mg left', '800 mg left']);
+  assert.deepEqual(lines.map((l) => l.danger), [false, false, true, false, false]);
+  const over = remainingLines({ ...totals, calories: 2600 }, DEFAULT_SETTINGS.targets)[0];
+  assert.equal(over.text, 'goal reached (+450 kcal)');
+  assert.equal(over.danger, false);
+});

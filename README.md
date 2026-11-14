@@ -25,7 +25,7 @@ Built in phases.
 
 - [x] **1. Scaffold**: storage, settings (targets and colors), my foods, manual logging, tests
 - [x] **2. Chart**: the five-bar SVG chart, entry editing and undo, offline PWA
-- [ ] **3. Voice and parser**: speech and text input, fuzzy food matching, foods-file import/export
+- [x] **3. Voice and parser**: speech and text input, fuzzy food matching, foods-file import/export
 - [ ] **4. AI lookup**: nutrition lookup for unknown foods, with confirm-before-save
 - [ ] **5. Days and backup**: 2 AM rollover snapshots, history, zip backup and restore
 - [ ] **6. Trend indicator**
@@ -43,11 +43,32 @@ docs/               the app, served as-is by GitHub Pages (no build step)
     store.js        the only module that touches IndexedDB
     chart.js        pure: renderChartSVG(totals, targets, colors) -> SVG string
     nutrients.js    pure: nutrient definitions, targets, scaling, totals
+    parser.js       pure: "half a banana" -> amount + unit + food, and commands
+    fuzzy.js        pure: matching a spoken name to foods and aliases
+    foodsFile.js    pure: the foods text file (parse, merge/replace plan, export)
     units.js        pure: unit names and conversions
     day.js          pure: the 2 AM food-day boundary
     ui/             screens (Today, Foods, Settings)
 tests/              node --test unit tests for the pure modules
 ```
+
+## Logging
+
+Type or dictate into the field on the Today screen and press Return:
+
+- `log 12gm of candied pecans`, `2 slices toast`, `half a banana`, `a cup of rice`, `1.5 oz cheddar`
+- `undo`, `delete the pecans`, `what's left?`
+
+Known foods are logged instantly and never need the network. If several foods
+match, the app asks which one. Press and hold an entry to edit or delete it.
+
+## The foods file
+
+Foods import and export as a plain-text CSV, so the list can be edited on a
+computer and moved to the phone through Files or iCloud Drive.
+[docs/example-foods.txt](docs/example-foods.txt) has the header and the column
+notes. Import previews its changes ("12 new, 3 updated, 1 line skipped") and
+offers Merge or Replace all before anything is saved.
 
 ## Rules this code follows
 

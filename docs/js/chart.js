@@ -12,8 +12,8 @@ const FONT = "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Ar
 
 const LABEL_SIZE = 37;
 const LABEL_GAP = 14; // space between a label and the bar top
-const LETTER_SIZE = 76;
-const LETTER_BASELINE_UP = 48; // letter baseline, measured up from the column bottom
+const LETTER_SIZE = 72;
+const LETTER_BAND = 104; // strip along the very bottom that holds the letters, below the bars
 const CHAR_WIDTH = 0.56; // rough bold glyph width in ems, used to keep labels inside a column
 
 function r(x) {
@@ -29,17 +29,19 @@ function esc(text) {
 }
 
 /**
- * All chart geometry, in a 1000 x 1000 box. Each bar is scaled to its own
- * target: height = value / target of the column height, clamped at 100%.
+ * All chart geometry, in a 1000 x 1000 box. The letters sit in a strip along
+ * the bottom; the columns above it are the graphing area. Each bar is scaled
+ * to its own target: height = value / target of the column height, clamped at
+ * 100%. Bars start just above the letter strip and never overlap it.
  */
 export function chartLayout(totals, targets, colors, options = {}) {
   const count = NUTRIENTS.length;
   const colW = (W - GAP * (count + 1)) / count;
   const colTop = GAP;
-  const colH = H - 2 * GAP;
-  const colBottom = colTop + colH;
-  const letterBaseline = colBottom - LETTER_BASELINE_UP;
-  const letterTop = letterBaseline - LETTER_SIZE;
+  const bandTop = H - GAP - LETTER_BAND;
+  const colBottom = bandTop - GAP;
+  const colH = colBottom - colTop;
+  const letterBaseline = bandTop + LETTER_BAND / 2 + LETTER_SIZE * 0.36;
 
   const texts = NUTRIENTS.map((n) => formatValue(n, Number(totals?.[n.key]) || 0));
   // One size for every label, shrunk if the widest would not fit its column.
@@ -55,9 +57,8 @@ export function chartLayout(totals, targets, colors, options = {}) {
     const top = colBottom - height;
     const centerX = x + colW / 2;
 
-    // Label sits just above the bar, but never lower than the letter, so it
-    // stays readable when the bar is near 0%.
-    const aboveBaseline = Math.min(top - LABEL_GAP, letterTop - LABEL_GAP);
+    // Label sits just above the bar. At 0% that is just above the letter strip.
+    const aboveBaseline = top - LABEL_GAP;
     const fitsAbove = !status.goalMet && aboveBaseline - labelSize >= colTop + 8;
     const label = { text: texts[i], x: centerX, size: labelSize, inside: !fitsAbove };
     if (fitsAbove) {
@@ -91,6 +92,7 @@ export function chartLayout(totals, targets, colors, options = {}) {
       h: height,
       label,
       letterPos: { x: centerX, y: letterBaseline },
+      letterCell: { x, y: bandTop, w: colW, h: LETTER_BAND },
     };
   });
 
@@ -132,6 +134,8 @@ export function renderChartSVG(totals, targets, colors, options = {}) {
   for (const b of layout.bars) {
     const c = b.column;
     out.push(`<rect x="${r(c.x)}" y="${r(c.y)}" width="${r(c.w)}" height="${r(c.h)}" fill="${BG}"/>`);
+    const lc = b.letterCell;
+    out.push(`<rect x="${r(lc.x)}" y="${r(lc.y)}" width="${r(lc.w)}" height="${r(lc.h)}" fill="${BG}"/>`);
     if (b.h > 0) {
       out.push(
         `<rect class="bar" data-key="${b.key}" x="${r(b.x)}" y="${r(b.y)}" width="${r(b.w)}" height="${r(b.h)}" fill="${b.color}"/>`,

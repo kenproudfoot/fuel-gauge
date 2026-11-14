@@ -1,0 +1,16 @@
+# Fuel Gauge foods file
+#
+# One food per line. Lines starting with # are ignored, and so are blank lines.
+# All values are for ONE serving (serving_amount of serving_unit).
+#   aliases               other names you might say, separated by |
+#   serving_unit          g, oz, lb, cup, tbsp, tsp, ml, each, slice or piece
+#   grams_per_serving     optional; lets you log a cup/slice/each food by weight
+#   effective_carbs_g     total carbs minus fiber; leave blank if unknown
+#   phosphate_additives   true or false
+#   source                me or ai-confirmed
+#
+# Example (remove the leading # and replace every value with the real ones from the label):
+# my example food, example | sample food, 1, cup, 100, 0, 0, 0, 0, 0, 0, false, me, replace these placeholder values
+#
+# name, aliases (| separated), serving_amount, serving_unit, grams_per_serving, calories, protein_g, sodium_mg, potassium_mg, phosphorus_mg, effective_carbs_g, phosphate_additives, source, notes
+name,aliases,serving_amount,serving_unit,grams_per_serving,calories,protein_g,sodium_mg,potassium_mg,phosphorus_mg,effective_carbs_g,phosphate_additives,source,notes

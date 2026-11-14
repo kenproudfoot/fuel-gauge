@@ -15,14 +15,14 @@ let storageInfo = { persisted: null };
 let views = {};
 let current = 'today';
 
-async function goTo(name) {
+async function goTo(name, params) {
   current = name;
   for (const button of tabs.querySelectorAll('button')) {
     button.setAttribute('aria-current', button.dataset.view === name ? 'page' : 'false');
   }
   main.replaceChildren(views[name].root);
   window.scrollTo(0, 0);
-  await views[name].refresh();
+  await views[name].refresh(params);
 }
 
 async function boot() {

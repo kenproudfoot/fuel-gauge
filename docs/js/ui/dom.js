@@ -93,3 +93,27 @@ export function onLongPress(node, handler, ms = 500) {
     if (event.key === 'Enter' && event.target === node) handler({ held: false });
   });
 }
+
+/**
+ * Hand a file to the iOS share sheet (Save to Files, iCloud Drive, AirDrop),
+ * or download it where sharing files is not supported.
+ * Returns 'shared', 'downloaded' or 'cancelled'.
+ */
+export async function shareOrDownload(file) {
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: file.name });
+      return 'shared';
+    } catch (error) {
+      if (error?.name === 'AbortError') return 'cancelled';
+      // Anything else: fall through to a plain download.
+    }
+  }
+  const url = URL.createObjectURL(file);
+  const link = el('a', { href: url, download: file.name, hidden: true });
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  return 'downloaded';
+}

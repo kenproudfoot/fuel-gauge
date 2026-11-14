@@ -101,11 +101,25 @@ test('labels carry units and sit just above the bar', () => {
   }
 });
 
-test('labels stay clear of the letter when a bar is near 0%', () => {
+test('letters sit in a strip at the very bottom, and bars never reach into it', () => {
+  for (const totals of [zero, reference, { calories: 9999, protein_g: 999, sodium_mg: 9999, potassium_mg: 9999, phosphorus_mg: 9999 }]) {
+    const layout = chartLayout(totals, targets, colors);
+    for (const b of layout.bars) {
+      const cell = b.letterCell;
+      assert.ok(b.y + b.h <= cell.y, `${b.key} bar ends above the letter strip`);
+      assert.ok(b.column.y + b.column.h <= cell.y, 'graphing area ends above the letter strip');
+      assert.ok(b.letterPos.y > cell.y && b.letterPos.y < cell.y + cell.h, 'letter is inside its strip');
+      assert.ok(Math.abs(cell.y + cell.h - (layout.height - 6)) < 1e-9, 'strip is at the very bottom');
+    }
+  }
+});
+
+test('labels stay readable above the letter strip when a bar is near 0%', () => {
   for (const value of [0, 1, 20, 100]) {
     const c = bar(chartLayout({ ...zero, calories: value }, targets, colors), 'calories');
-    assert.ok(c.label.y < c.letterPos.y - 76, `label above the letter at ${value}`);
     assert.equal(c.label.inside, false);
+    assert.ok(c.label.y < c.letterCell.y, `label above the strip at ${value}`);
+    assert.ok(c.label.y <= c.y, 'label above the bar top');
   }
 });
 

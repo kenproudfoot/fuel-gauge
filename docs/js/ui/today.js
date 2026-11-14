@@ -1,12 +1,14 @@
-// Today screen: the chart, the carbs line, manual logging, today's entries.
+// Today screen: the chart, the carbs line, voice/text logging, today's entries.
 
 import { el, parseNumber, toast, hideToast, onLongPress } from './dom.js';
 import {
   NUTRIENTS,
+  DANGER,
   scaleFood,
   scaleNutrients,
   sumEntries,
   lastLoggedEntry,
+  remainingLines,
   formatValue,
   formatCarbs,
   formatCarbTotal,
@@ -14,16 +16,81 @@ import {
 import { servingsFor, unitsFor, normalizeUnit, formatAmount } from '../units.js';
 import { foodDayKey, formatDayKey, timeOfDay, timestampInFoodDay } from '../day.js';
 import { renderChartSVG } from '../chart.js';
+import { parseInput } from '../parser.js';
+import { matchFoods, scoreName } from '../fuzzy.js';
+import { createVoice } from './voice.js';
 
 const UNDO_MS = 10000;
+const PLACEHOLDER = '12 g candied pecans';
+const MIC_ICON =
+  '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8.5 21h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
 export function createTodayView({ store, getSettings, goTo }) {
-  const root = el('section', { class: 'view' });
-  const sheetHost = el('div');
   let foods = [];
   let entries = [];
   let day = foodDayKey();
-  let filter = '';
+
+  // Fixed skeleton, so re-rendering never takes focus away from the text field.
+  const statusRow = el('div', { class: 'status-row' });
+  const chartBox = el('div', { class: 'chart' });
+  const carbsBox = el('div');
+  const input = el('input', {
+    class: 'big-input command-input',
+    type: 'text',
+    enterKeyHint: 'go',
+    autocapitalize: 'off',
+    autocomplete: 'off',
+    placeholder: PLACEHOLDER,
+    'aria-label': 'What did you eat? Type or dictate, then press Return.',
+    oninput: () => showSuggestions(),
+  });
+  const micButton = el('button', { class: 'mic', type: 'button', 'aria-label': 'Speak' });
+  micButton.innerHTML = MIC_ICON; // static markup defined above
+  const responseBox = el('div');
+  const entriesBox = el('div');
+  const sheetHost = el('div');
+  const root = el(
+    'section',
+    { class: 'view' },
+    statusRow,
+    chartBox,
+    carbsBox,
+    el(
+      'form',
+      {
+        class: 'command',
+        onsubmit: (e) => {
+          e.preventDefault();
+          handleCommand(input.value);
+        },
+      },
+      input,
+      micButton,
+    ),
+    responseBox,
+    entriesBox,
+    sheetHost,
+  );
+
+  // Voice and typed text go through the same handleCommand pipeline.
+  const voice = createVoice({
+    onInterim: (text) => (input.value = text),
+    onFinal: (text) => {
+      input.value = text;
+      handleCommand(text);
+    },
+    onError: (message) => respond(noticeCard(message)),
+    onState: (listening) => {
+      micButton.classList.toggle('listening', listening);
+      micButton.setAttribute('aria-label', listening ? 'Stop listening' : 'Speak');
+      input.placeholder = listening ? 'Listening…' : PLACEHOLDER;
+    },
+  });
+  micButton.hidden = !voice.supported;
+  micButton.addEventListener('click', () => {
+    respond();
+    voice.toggle();
+  });
 
   async function refresh() {
     day = foodDayKey();
@@ -36,20 +103,13 @@ export function createTodayView({ store, getSettings, goTo }) {
     const live = entries.filter((e) => !e.deleted);
     const totals = sumEntries(entries);
 
-    const chart = el('div', { class: 'chart' });
+    statusRow.replaceChildren(el('span', { text: `Food day: ${formatDayKey(day)}` }));
     // Safe: the SVG is built by our own pure function from numbers and vetted colors.
-    chart.innerHTML = renderChartSVG(totals, settings.targets, settings.colors, {
+    chartBox.innerHTML = renderChartSVG(totals, settings.targets, settings.colors, {
       showMealLabels: settings.showMealLabels,
     });
-
-    root.replaceChildren(
-      el('div', { class: 'status-row' }, el('span', { text: `Food day: ${formatDayKey(day)}` })),
-      chart,
-      renderCarbsLine(totals, lastLoggedEntry(entries)),
-      renderLogSection(),
-      renderEntries(live),
-      sheetHost,
-    );
+    carbsBox.replaceChildren(renderCarbsLine(totals, lastLoggedEntry(entries)));
+    entriesBox.replaceChildren(renderEntries(live));
   }
 
   function renderCarbsLine(totals, lastEntry) {
@@ -64,53 +124,170 @@ export function createTodayView({ store, getSettings, goTo }) {
     return line;
   }
 
-  function renderLogSection() {
-    if (foods.length === 0) {
-      return el(
+  // --- command pipeline ---------------------------------------------------
+
+  function respond(...nodes) {
+    responseBox.replaceChildren(...nodes.filter(Boolean));
+  }
+
+  function clearInput() {
+    input.value = '';
+    respond();
+  }
+
+  function noticeCard(message, ...extra) {
+    return el('div', { class: 'card' }, el('p', { text: message }), extra);
+  }
+
+  async function handleCommand(text) {
+    const command = parseInput(text);
+    if (command.type === 'unknown') {
+      respond(noticeCard(`Try something like “${PLACEHOLDER}”, “undo” or “what's left?”`));
+    } else if (command.type === 'undo') {
+      const last = lastLoggedEntry(entries);
+      if (!last) return respond(noticeCard('Nothing to undo today.'));
+      clearInput();
+      await removeEntry(last, true);
+    } else if (command.type === 'remaining') {
+      input.value = '';
+      showRemaining();
+    } else if (command.type === 'delete') {
+      await deleteByName(command.query);
+    } else {
+      const { status, matches } = matchFoods(command.food, foods);
+      if (status === 'none') showNotFound(command);
+      else if (status === 'choices') showChoices(command, matches, 'Which one?');
+      else await logFood(matches[0].food, command);
+    }
+  }
+
+  /** As you type, offer matching foods; tapping one logs it with the typed amount. */
+  function showSuggestions() {
+    const command = parseInput(input.value);
+    if (command.type !== 'log' || command.food.length < 2) return respond();
+    const { matches } = matchFoods(command.food, foods);
+    if (matches.length) showChoices(command, matches, null);
+    else respond();
+  }
+
+  function showChoices(command, matches, heading) {
+    respond(
+      el(
         'div',
         { class: 'card' },
-        el('h2', { text: 'Log a food' }),
-        el('p', { class: 'muted', text: 'Your foods list is empty. Add a food first, then log it here.' }),
-        el('button', { class: 'btn primary', text: 'Add a food', onclick: () => goTo('foods') }),
+        heading && el('h2', { text: heading }),
+        el(
+          'div',
+          { class: 'food-list' },
+          matches.map(({ food }) =>
+            el(
+              'button',
+              { class: 'food-pick', type: 'button', onclick: () => logFood(food, command) },
+              el('span', { class: 'food-name', text: food.name }),
+              el('span', {
+                class: 'muted',
+                text:
+                  command.amount == null
+                    ? `per ${formatAmount(food.serving_amount, food.serving_unit)}`
+                    : formatAmount(command.amount, command.unit),
+              }),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  function showNotFound(command) {
+    respond(
+      noticeCard(
+        `“${command.food}” isn't in your foods yet.`,
+        el('button', {
+          class: 'btn primary',
+          type: 'button',
+          text: 'Add it to my foods',
+          onclick: () => goTo('foods', { newName: command.food }),
+        }),
+      ),
+    );
+  }
+
+  function showRemaining() {
+    const lines = remainingLines(sumEntries(entries), getSettings().targets);
+    respond(
+      el(
+        'div',
+        { class: 'card' },
+        el('div', { class: 'card-head' }, el('h2', { text: "What's left today" }), el('button', { class: 'btn small', type: 'button', text: 'Close', onclick: () => respond() })),
+        lines.map((line) => {
+          const value = el('span', { class: 'remaining-value', text: line.text });
+          if (line.danger) value.style.color = DANGER; // an exceeded limit is the one thing shown in red
+          return el('div', { class: 'remaining-row' }, el('span', { text: `${line.letter} · ${line.name}` }), value);
+        }),
+      ),
+    );
+  }
+
+  /** "delete the pecans": remove today's best-matching entry (most recently logged on a tie). */
+  async function deleteByName(query) {
+    const candidates = entries
+      .filter((e) => !e.deleted)
+      .map((entry) => ({ entry, score: scoreName(query, entry.foodName) }))
+      .filter((c) => c.score >= 0.55)
+      .sort((a, b) => b.score - a.score || (b.entry.createdAt ?? b.entry.ts) - (a.entry.createdAt ?? a.entry.ts));
+    if (candidates.length === 0) return respond(noticeCard(`No entry today matches “${query}”.`));
+    clearInput();
+    await removeEntry(candidates[0].entry, true);
+  }
+
+  /** Log a known food from a parsed command. Never needs the network. */
+  async function logFood(food, command) {
+    if (command.amount == null) {
+      clearInput();
+      return openLogSheet(food);
+    }
+    const servings = servingsFor(food, command.amount, command.unit);
+    if (servings == null) {
+      // Can't convert what was said; ask instead of guessing.
+      clearInput();
+      return openLogSheet(
+        food,
+        `${food.name} is measured per ${formatAmount(food.serving_amount, food.serving_unit)}, so “${formatAmount(command.amount, command.unit)}” can't be converted. Set the amount here.`,
       );
     }
-    const list = el('div', { class: 'food-list' });
-    const fillList = () => {
-      const q = filter.trim().toLowerCase();
-      const shown = foods.filter(
-        (f) => !q || f.name.toLowerCase().includes(q) || (f.aliases || []).some((a) => a.toLowerCase().includes(q)),
-      );
-      list.replaceChildren(
-        ...(shown.length
-          ? shown.map((f) =>
-              el(
-                'button',
-                { class: 'food-pick', onclick: () => openLogSheet(f) },
-                el('span', { class: 'food-name', text: f.name }),
-                el('span', { class: 'muted', text: `per ${formatAmount(f.serving_amount, f.serving_unit)}` }),
-              ),
-            )
-          : [el('p', { class: 'muted', text: 'No foods match.' })]),
-      );
-    };
-    fillList();
-    return el(
-      'div',
-      { class: 'card' },
-      el('h2', { text: 'Log a food' }),
-      el('input', {
-        class: 'big-input',
-        type: 'search',
-        placeholder: 'Filter my foods',
-        value: filter,
-        autocapitalize: 'off',
-        oninput: (e) => {
-          filter = e.target.value;
-          fillList();
-        },
-      }),
-      list,
-    );
+    clearInput();
+    await saveNewEntry(food, {
+      amount: command.amount,
+      unit: command.unit,
+      servings,
+      nutrients: scaleFood(food, servings),
+      ts: Date.now(),
+    });
+  }
+
+  async function saveNewEntry(food, result) {
+    const entry = await store.putEntry({
+      ts: result.ts,
+      createdAt: Date.now(),
+      day,
+      foodId: food.id,
+      foodName: food.name,
+      amount: result.amount,
+      unit: result.unit,
+      servings: result.servings,
+      nutrients: result.nutrients,
+      source: food.source,
+      estimated: false,
+      phosphate_additives: Boolean(food.phosphate_additives),
+      deleted: false,
+      history: [],
+    });
+    await refresh();
+    toast(`Logged ${formatAmount(entry.amount, entry.unit)} ${entry.foodName}`, {
+      ms: UNDO_MS,
+      actionLabel: 'Undo',
+      onAction: () => removeEntry(entry, false),
+    });
   }
 
   // --- sheets -------------------------------------------------------------
@@ -123,7 +300,7 @@ export function createTodayView({ store, getSettings, goTo }) {
    * Amount + unit + time form shared by logging and editing.
    * compute(amount, unit) returns { servings, nutrients } or null.
    */
-  function openEntrySheet({ title, amount, units, unit, ts, compute, submitLabel, onSubmit, extra, held }) {
+  function openEntrySheet({ title, note, amount, units, unit, ts, compute, submitLabel, onSubmit, extra, held }) {
     const amountInput = el('input', {
       class: 'big-input',
       type: 'text',
@@ -192,6 +369,7 @@ export function createTodayView({ store, getSettings, goTo }) {
         },
       },
       el('h2', { text: title }),
+      note && el('div', { class: 'notice', text: note }),
       el('div', { class: 'row' }, amountInput, unitSelect),
       el('label', { class: 'field' }, el('span', { class: 'field-label', text: 'Time eaten' }), timeInput),
       preview,
@@ -219,9 +397,10 @@ export function createTodayView({ store, getSettings, goTo }) {
     return amountInput;
   }
 
-  function openLogSheet(food) {
+  function openLogSheet(food, note) {
     const amountInput = openEntrySheet({
       title: food.name,
+      note,
       amount: food.serving_amount,
       units: unitsFor(food),
       unit: normalizeUnit(food.serving_unit),
@@ -232,30 +411,8 @@ export function createTodayView({ store, getSettings, goTo }) {
         return servings == null ? null : { servings, nutrients: scaleFood(food, servings) };
       },
       onSubmit: async (result) => {
-        const now = Date.now();
-        const entry = await store.putEntry({
-          ts: result.ts,
-          createdAt: now,
-          day,
-          foodId: food.id,
-          foodName: food.name,
-          amount: result.amount,
-          unit: result.unit,
-          servings: result.servings,
-          nutrients: result.nutrients,
-          source: food.source,
-          estimated: false,
-          phosphate_additives: Boolean(food.phosphate_additives),
-          deleted: false,
-          history: [],
-        });
         closeSheet();
-        await refresh();
-        toast(`Logged ${formatAmount(entry.amount, entry.unit)} ${entry.foodName}`, {
-          ms: UNDO_MS,
-          actionLabel: 'Undo',
-          onAction: () => removeEntry(entry, false),
-        });
+        await saveNewEntry(food, result);
       },
     });
     amountInput.focus();
@@ -367,7 +524,14 @@ export function createTodayView({ store, getSettings, goTo }) {
       ),
     );
     if (live.length === 0) {
-      card.append(el('p', { class: 'muted', text: 'Nothing logged yet today.' }));
+      card.append(
+        el('p', {
+          class: 'muted',
+          text: foods.length
+            ? 'Nothing logged yet today.'
+            : 'Nothing logged yet. Your foods list is empty: add or import foods on the Foods screen first.',
+        }),
+      );
       return card;
     }
     card.append(el('p', { class: 'muted small-text', text: 'Press and hold an entry to edit it.' }));

@@ -195,3 +195,18 @@ export function lastLoggedEntry(entries) {
   }
   return last;
 }
+
+/**
+ * "What's left?" as one line per nutrient. Going over a limit is flagged as
+ * danger; passing the calorie goal is good news, never danger.
+ */
+export function remainingLines(totals, targets) {
+  return NUTRIENTS.map((n) => {
+    const left = (Number(targets[n.key]) || 0) - (Number(totals[n.key]) || 0);
+    const amount = formatValue(n, Math.abs(left));
+    let text;
+    if (n.type === 'goal') text = left > 0 ? `${amount} to go` : `goal reached (+${amount})`;
+    else text = left >= 0 ? `${amount} left` : `over by ${amount}`;
+    return { key: n.key, letter: n.letter, name: n.name, text, danger: n.type === 'limit' && left < 0 };
+  });
+}

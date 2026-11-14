@@ -1,6 +1,7 @@
 // My foods screen: list, add, edit, soft-delete. Values typed here have source "me".
 
-import { el, toast } from './dom.js';
+import { el, toast, shareOrDownload } from './dom.js';
+import { parseFoodsFile, planImport, describeImport, serializeFoodsFile } from '../foodsFile.js';
 import { NUTRIENTS, validateFood } from '../nutrients.js';
 import { SERVING_UNITS, normalizeUnit, unitKind, formatAmount } from '../units.js';
 
@@ -8,9 +9,91 @@ export function createFoodsView({ store }) {
   const root = el('section', { class: 'view' });
   let foods = [];
 
-  async function refresh() {
+  async function refresh(params) {
     foods = await store.listFoods();
-    renderList();
+    // Arriving from "Add it to my foods" opens the form with the name filled in.
+    if (params?.newName) renderForm(null, { name: params.newName });
+    else renderList();
+  }
+
+  async function exportFile() {
+    const file = new File([serializeFoodsFile(foods)], 'my-foods.txt', { type: 'text/plain' });
+    const outcome = await shareOrDownload(file);
+    if (outcome === 'downloaded') toast('Saved my-foods.txt');
+  }
+
+  /** Preview what a file would change, then apply it only on confirm. */
+  function renderImport(fileName, text) {
+    const parsed = parseFoodsFile(text);
+    const back = el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: renderList });
+    if (parsed.error || parsed.foods.length === 0) {
+      root.replaceChildren(
+        el(
+          'div',
+          { class: 'card' },
+          el('h2', { text: 'Import foods' }),
+          el('div', { class: 'notice', text: parsed.error || 'No foods were found in that file.' }),
+          parsed.skipped.map((s) => el('p', { class: 'muted small-text', text: `Line ${s.line}: ${s.reason}` })),
+          back,
+        ),
+      );
+      return;
+    }
+
+    let mode = 'merge';
+    let plan = planImport(foods, parsed.foods, mode);
+    const summary = el('p', { class: 'import-summary' });
+    const warning = el('div', { class: 'notice', hidden: true });
+    const radio = (value, label, hint) =>
+      el(
+        'label',
+        { class: 'check' },
+        el('input', {
+          type: 'radio',
+          name: 'import-mode',
+          value,
+          checked: value === mode,
+          onchange: () => {
+            mode = value;
+            update();
+          },
+        }),
+        el('span', {}, label, el('span', { class: 'muted small-text', text: ` ${hint}` })),
+      );
+    const update = () => {
+      plan = planImport(foods, parsed.foods, mode);
+      summary.textContent = describeImport(plan, parsed.skipped);
+      warning.hidden = plan.remove.length === 0;
+      warning.textContent = `Replace all removes ${plan.remove.length} food${plan.remove.length === 1 ? '' : 's'} that ${plan.remove.length === 1 ? 'is' : 'are'} not in this file. Past log entries are kept.`;
+    };
+    update();
+
+    const confirm = el('button', {
+      class: 'btn primary',
+      type: 'button',
+      text: 'Import',
+      onclick: async () => {
+        confirm.disabled = true;
+        for (const food of [...plan.add, ...plan.update]) await store.putFood(food);
+        for (const food of plan.remove) await store.deleteFood(food);
+        toast(`Imported: ${describeImport(plan, [])}`, { ms: 5000 });
+        await refresh();
+      },
+    });
+    root.replaceChildren(
+      el(
+        'div',
+        { class: 'card' },
+        el('h2', { text: 'Import foods' }),
+        el('p', { class: 'muted', text: fileName }),
+        summary,
+        radio('merge', 'Merge', 'update matching names, add new ones'),
+        radio('replace', 'Replace all', 'my foods become exactly this file'),
+        warning,
+        el('div', { class: 'row' }, back, confirm),
+      ),
+    );
+    window.scrollTo(0, 0);
   }
 
   function renderList() {
@@ -19,6 +102,27 @@ export function createFoodsView({ store }) {
       { class: 'card' },
       el('h2', { text: `My foods (${foods.length})` }),
       el('button', { class: 'btn primary', text: 'Add a food', onclick: () => renderForm(null) }),
+      el(
+        'div',
+        { class: 'row' },
+        // A label wrapping the file input opens the iOS file picker (Files / iCloud Drive).
+        el(
+          'label',
+          { class: 'btn file-btn' },
+          'Import file',
+          el('input', {
+            class: 'visually-hidden',
+            type: 'file',
+            accept: '.txt,.csv,text/plain,text/csv',
+            onchange: async (e) => {
+              const file = e.target.files[0];
+              if (file) renderImport(file.name, await file.text());
+            },
+          }),
+        ),
+        el('button', { class: 'btn', type: 'button', text: 'Export file', disabled: foods.length === 0, onclick: exportFile }),
+      ),
+      el('a', { class: 'muted small-text', href: 'example-foods.txt', download: 'example-foods.txt', text: 'Download an example foods file' }),
     );
     if (foods.length === 0) {
       card.append(el('p', { class: 'muted', text: 'No foods yet. Add one with its nutrition-label values.' }));
@@ -39,8 +143,8 @@ export function createFoodsView({ store }) {
     root.replaceChildren(card);
   }
 
-  function renderForm(existing) {
-    const food = existing || {};
+  function renderForm(existing, prefill = {}) {
+    const food = existing || prefill;
     const text = (value) => (value == null ? '' : String(value));
     const field = (label, input, hint) =>
       el('label', { class: 'field' }, el('span', { class: 'field-label', text: label }), input, hint && el('span', { class: 'muted small-text', text: hint }));
