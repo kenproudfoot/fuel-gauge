@@ -375,3 +375,19 @@ a.muted { text-decoration: underline; padding: 8px 0; }
 input[type="date"].big-input { display: block; text-align: left; min-width: 0; }
 input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 #tabs button { font-size: 14px; }
+
+/* Badges: yellow outline. Never red; a badge is a heads-up, not a limit exceeded. */
+.badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--notice);
+  border: 1px solid var(--notice);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.field-label .badge { font-size: 11px; padding: 0 6px; margin-left: 2px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
+.grid-2 .field { min-width: 0; }

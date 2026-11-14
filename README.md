@@ -26,7 +26,7 @@ Built in phases.
 - [x] **1. Scaffold**: storage, settings (targets and colors), my foods, manual logging, tests
 - [x] **2. Chart**: the five-bar SVG chart, entry editing and undo, offline PWA
 - [x] **3. Voice and parser**: speech and text input, fuzzy food matching, foods-file import/export
-- [ ] **4. AI lookup**: nutrition lookup for unknown foods, with confirm-before-save
+- [x] **4. AI lookup**: nutrition lookup for unknown foods, with confirm-before-save
 - [x] **5. Days and backup**: 2 AM rollover snapshots, history, zip backup and restore (done ahead of phase 4)
 - [ ] **6. Trend indicator**
 
@@ -48,6 +48,7 @@ docs/               the app, served as-is by GitHub Pages (no build step)
     foodsFile.js    pure: the foods text file (parse, merge/replace plan, export)
     history.js      pure: a finished day's summary record and readable text log
     backup.js       pure: backup files (entries.csv, daily_summary.csv, ...) and restore planning
+    ai.js           OpenAI-compatible client, prompts, reply validation (fetch is injectable)
     units.js        pure: unit names and conversions
     day.js          pure: the 2 AM food-day boundary
     ui/             screens (Today, History, Foods, Settings), files, backup
@@ -64,6 +65,33 @@ Type or dictate into the field on the Today screen and press Return:
 
 Known foods are logged instantly and never need the network. If several foods
 match, the app asks which one. Press and hold an entry to edit or delete it.
+
+## AI lookup
+
+Foods that are not in the list can be looked up through any OpenAI-compatible
+Chat Completions API, called with `fetch` directly from the browser. Set the
+provider, API key and model under **Settings → AI lookup**. The key is stored
+only in the phone's IndexedDB; it is never logged and never written to a backup.
+Only the food text that was typed or dictated is sent to the provider.
+
+A lookup never logs anything by itself. It opens a confirm card with every
+value editable and tagged "estimated"; **Log & save to my foods** stores the
+food as `ai-confirmed`, and **Log once** leaves the entry marked estimated.
+If the AI can't be reached, the app says so and offers manual entry. Logging
+known foods never uses the network.
+
+Presets, each checked for browser (CORS) access on 2026-11-14:
+
+| Preset | Base URL | Note |
+|---|---|---|
+| OpenAI | `https://api.openai.com/v1` | |
+| Google Gemini | `https://generativelanguage.googleapis.com/v1beta/openai` | |
+| Anthropic Claude | `https://api.anthropic.com/v1` | The app adds the `anthropic-dangerous-direct-browser-access: true` header, which this endpoint requires from browsers. Anthropic describes this compatibility layer as meant for testing rather than production. |
+| Custom | any `https://` OpenAI-compatible address | Must allow browser requests from the app's origin. |
+
+Requests send only `model` and `messages` (JSON is asked for in the prompt and
+validated in the app, with one retry), because providers disagree on fields
+such as `response_format`.
 
 ## Days, history and backup
 

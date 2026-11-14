@@ -237,3 +237,22 @@ test('"what\'s left" reports room, goals reached and limits exceeded', () => {
   assert.equal(over.text, 'goal reached (+450 kcal)');
   assert.equal(over.danger, false);
 });
+
+import { entryBadges } from '../docs/js/nutrients.js';
+
+test('High P badge at the phosphorus threshold or for phosphate additives', () => {
+  const t = DEFAULT_SETTINGS.badgeThresholds;
+  const e = (phosphorus_mg, over = {}) => ({ nutrients: { calories: 1, protein_g: 40, sodium_mg: 900, potassium_mg: 900, phosphorus_mg }, ...over });
+  assert.deepEqual(entryBadges(e(149), t), []);
+  assert.deepEqual(entryBadges(e(150), t), ['High P']);
+  assert.deepEqual(entryBadges(e(10, { phosphate_additives: true }), t), ['High P (additives)']);
+  assert.deepEqual(entryBadges(e(200, { phosphate_additives: true }), t), ['High P · additives']);
+  assert.deepEqual(entryBadges(e(10, { estimated: true }), t), ['estimated']);
+});
+
+test('other nutrient badges are off until a threshold is set', () => {
+  const e = { nutrients: { calories: 1, protein_g: 40, sodium_mg: 900, potassium_mg: 900, phosphorus_mg: 10 } };
+  assert.deepEqual(entryBadges(e, DEFAULT_SETTINGS.badgeThresholds), []);
+  assert.deepEqual(entryBadges(e, { phosphorus_mg: null, sodium_mg: 600, potassium_mg: 901, protein_g: 40 }), ['High sodium', 'High protein']);
+  assert.deepEqual(entryBadges(e, {}), []);
+});

@@ -13,6 +13,7 @@ import {
   lastLoggedEntry,
   remainingLines,
   nutrientSummary,
+  entryBadges,
   formatValue,
   formatCarbs,
   formatCarbTotal,
@@ -23,6 +24,8 @@ import { renderChartSVG } from '../chart.js';
 import { parseInput } from '../parser.js';
 import { matchFoods, scoreName } from '../fuzzy.js';
 import { createVoice } from './voice.js';
+import { isConfigured, lookupFood, parseWithAi, gramsFor } from '../ai.js';
+import { createConfirmCard } from './confirmCard.js';
 
 const UNDO_MS = 10000;
 const PLACEHOLDER = '12 g candied pecans';
@@ -187,8 +190,39 @@ export function createTodayView(context) {
     return el('div', { class: 'card' }, el('p', { text: message }), extra);
   }
 
+  const aiConfig = () => getSettings().ai;
+  let aiAbort = null;
+
+  /** Show a "working" card with a Cancel button while an AI request runs. */
+  async function withAi(message, work) {
+    aiAbort?.abort();
+    const controller = new AbortController();
+    aiAbort = controller;
+    respond(noticeCard(message, el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: () => controller.abort() })));
+    try {
+      return await work({ signal: controller.signal });
+    } finally {
+      if (aiAbort === controller) aiAbort = null;
+    }
+  }
+
   async function handleCommand(text) {
-    const command = parseInput(text);
+    let command = parseInput(text);
+    // The local parser comes first. Only when it can't get amount + unit + food,
+    // and nothing in my foods matches, is the raw text sent to the AI to parse.
+    const stuck =
+      command.type === 'unknown' ||
+      (command.type === 'log' && !command.confident && matchFoods(command.food, foods).status === 'none');
+    if (stuck && String(text).trim() && isConfigured(aiConfig())) {
+      try {
+        const parsed = await withAi('Working out what that was…', (deps) => parseWithAi(aiConfig(), text, deps));
+        if (parsed) command = parsed;
+      } catch (error) {
+        if (error.kind === 'cancelled') return respond();
+        // Fall through with what the local parser had.
+      }
+      respond();
+    }
     if (command.type === 'unknown') {
       respond(noticeCard(`Try something like “${PLACEHOLDER}”, “undo” or “what's left?”`));
     } else if (command.type === 'undo') {
@@ -203,7 +237,7 @@ export function createTodayView(context) {
       await deleteByName(command.query);
     } else {
       const { status, matches } = matchFoods(command.food, foods);
-      if (status === 'none') showNotFound(command);
+      if (status === 'none') await lookUp(command);
       else if (status === 'choices') showChoices(command, matches, 'Which one?');
       else await logFood(matches[0].food, command);
     }
@@ -246,18 +280,65 @@ export function createTodayView(context) {
     );
   }
 
-  function showNotFound(command) {
+  /** The manual path: always available, needs no network. */
+  function showNotFound(command, message) {
     respond(
       noticeCard(
-        `“${command.food}” isn't in your foods yet.`,
+        message || `“${command.food}” isn't in your foods yet.`,
         el('button', {
           class: 'btn primary',
           type: 'button',
-          text: 'Add it to my foods',
+          text: 'Enter the values myself',
           onclick: () => goTo('foods', { newName: command.food }),
         }),
+        !isConfigured(aiConfig()) &&
+          el('button', { class: 'btn', type: 'button', text: 'Set up AI lookup', onclick: () => goTo('settings') }),
       ),
     );
+  }
+
+  /** Food not in my list: ask the AI, then show a confirm card. Nothing is logged without a tap. */
+  async function lookUp(command) {
+    if (!isConfigured(aiConfig())) return showNotFound(command);
+    let lookup;
+    try {
+      lookup = await withAi(`Looking up “${command.food}”…`, (deps) => lookupFood(aiConfig(), command, deps));
+    } catch (error) {
+      if (error.kind === 'cancelled') return respond();
+      const offline = error.kind === 'network';
+      return showNotFound(
+        command,
+        offline
+          ? `Can't reach the AI right now, so “${command.food}” couldn't be looked up. You can enter its values yourself.`
+          : `${error.message} You can enter the values for “${command.food}” yourself.`,
+      );
+    }
+    respond(
+      createConfirmCard({
+        lookup,
+        command,
+        onCancel: () => respond(),
+        onLogSave: async (result) => {
+          // Confirmed by me: saved to my foods as ai-confirmed, with what I said as an alias.
+          let name = result.name;
+          if (foods.some((f) => f.name.trim().toLowerCase() === name.toLowerCase())) name = `${name} (AI)`;
+          const alias = command.food.toLowerCase() === name.toLowerCase() ? [] : [command.food];
+          const food = await store.putFood({ ...result.food, name, aliases: alias, source: 'ai-confirmed' });
+          clearInput();
+          await saveNewEntry(food, { ...result, ts: Date.now() });
+        },
+        onLogOnce: async (result) => {
+          // Logged without saving the food: the entry stays marked estimated.
+          clearInput();
+          await saveNewEntry(
+            { id: null, name: result.name, source: 'ai', phosphate_additives: result.food.phosphate_additives },
+            { ...result, ts: Date.now() },
+            true,
+          );
+        },
+      }),
+    );
+    responseBox.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   function showRemaining() {
@@ -296,12 +377,28 @@ export function createTodayView(context) {
     }
     const servings = servingsFor(food, command.amount, command.unit);
     if (servings == null) {
-      // Can't convert what was said; ask instead of guessing.
+      // Can't convert what was said. Ask the AI for a weight if possible, then
+      // always ask me to confirm in the sheet rather than logging a guess.
+      const said = formatAmount(command.amount, command.unit);
+      const per = formatAmount(food.serving_amount, food.serving_unit);
       clearInput();
-      return openLogSheet(
-        food,
-        `${food.name} is measured per ${formatAmount(food.serving_amount, food.serving_unit)}, so “${formatAmount(command.amount, command.unit)}” can't be converted. Set the amount here.`,
-      );
+      if (isConfigured(aiConfig()) && servingsFor(food, 1, 'g') != null) {
+        try {
+          const estimate = await withAi(`Converting ${said} of ${food.name} to grams…`, (deps) =>
+            gramsFor(aiConfig(), { food: food.name, amount: command.amount, unit: command.unit }, deps),
+          );
+          respond();
+          return openLogSheet(
+            food,
+            `AI estimate: ${said} is about ${estimate.grams} g${estimate.notes ? ` (${estimate.notes})` : ''}. Check the amount before logging.`,
+            { amount: estimate.grams, unit: 'g' },
+          );
+        } catch (error) {
+          respond();
+          if (error.kind === 'cancelled') return undefined;
+        }
+      }
+      return openLogSheet(food, `${food.name} is measured per ${per}, so “${said}” can't be converted. Set the amount here.`);
     }
     clearInput();
     await saveNewEntry(food, {
@@ -313,7 +410,7 @@ export function createTodayView(context) {
     });
   }
 
-  async function saveNewEntry(food, result) {
+  async function saveNewEntry(food, result, estimated = false) {
     const entry = await store.putEntry({
       ts: result.ts,
       createdAt: Date.now(),
@@ -325,7 +422,7 @@ export function createTodayView(context) {
       servings: result.servings,
       nutrients: result.nutrients,
       source: food.source,
-      estimated: false,
+      estimated,
       phosphate_additives: Boolean(food.phosphate_additives),
       deleted: false,
       history: [],
@@ -445,13 +542,13 @@ export function createTodayView(context) {
     return amountInput;
   }
 
-  function openLogSheet(food, note) {
+  function openLogSheet(food, note, start = null) {
     const amountInput = openEntrySheet({
       title: food.name,
       note,
-      amount: food.serving_amount,
+      amount: start?.amount ?? food.serving_amount,
       units: unitsFor(food),
-      unit: normalizeUnit(food.serving_unit),
+      unit: start?.unit ?? normalizeUnit(food.serving_unit),
       ts: null,
       submitLabel: 'Log',
       compute: (amount, unit) => {
@@ -553,6 +650,11 @@ export function createTodayView(context) {
     });
   }
 
+  function renderBadges(entry) {
+    const badges = entryBadges(entry, getSettings().badgeThresholds);
+    return badges.length ? el('div', { class: 'badges' }, badges.map((text) => el('span', { class: 'badge', text }))) : null;
+  }
+
   function renderEntries(live) {
     const last = lastLoggedEntry(live);
     const card = el(
@@ -600,6 +702,7 @@ export function createTodayView(context) {
           ` ${formatAmount(entry.amount, entry.unit)} ${entry.foodName}`,
         ),
         el('div', { class: 'entry-nutrients muted', text: nutrientSummary(entry.nutrients) }),
+        renderBadges(entry),
       );
       onLongPress(row, ({ held }) => openEditSheet(entry, held));
       card.append(row);

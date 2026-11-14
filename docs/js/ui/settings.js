@@ -4,6 +4,7 @@ import { el, parseNumber, toast } from './dom.js';
 import { NUTRIENTS, DEFAULT_SETTINGS, mergeSettings } from '../nutrients.js';
 import { APP_VERSION } from '../version.js';
 import { createBackupCard } from './backupUi.js';
+import { createAiCard } from './aiSettings.js';
 
 export function createSettingsView(context) {
   const { getSettings, saveSettings, storageInfo } = context;
@@ -45,12 +46,32 @@ export function createSettingsView(context) {
       inputMode: 'numeric',
       value: String(settings.backupNudgeDays),
     });
+    // Entry badges: "High P" has a default; the others are off until a number is entered.
+    const BADGES = [
+      ['phosphorus_mg', 'High P badge at (mg phosphorus per entry)'],
+      ['sodium_mg', 'High sodium badge at (mg per entry)'],
+      ['potassium_mg', 'High potassium badge at (mg per entry)'],
+      ['protein_g', 'High protein badge at (g per entry)'],
+    ];
+    const badgeInputs = Object.fromEntries(
+      BADGES.map(([key]) => [
+        key,
+        el('input', {
+          class: 'big-input',
+          type: 'text',
+          inputMode: 'decimal',
+          value: settings.badgeThresholds[key] == null ? '' : String(settings.badgeThresholds[key]),
+          placeholder: 'off',
+        }),
+      ]),
+    );
     const errorBox = el('div', { class: 'notice', hidden: true });
 
     const save = async (e) => {
       e.preventDefault();
       const errors = [];
-      const next = mergeSettings(settings);
+      // Start from what is stored now, so a key saved on the AI card since this form was drawn is kept.
+      const next = mergeSettings({ ...settings, ai: getSettings().ai });
       for (const n of NUTRIENTS) {
         const value = parseNumber(targetInputs[n.key].value);
         if (!(value > 0)) errors.push(`${n.name} target must be more than 0.`);
@@ -58,6 +79,12 @@ export function createSettingsView(context) {
         next.colors[n.key] = colorInputs[n.key].value;
       }
       next.showMealLabels = mealLabels.checked;
+      for (const [key, label] of BADGES) {
+        const text = badgeInputs[key].value.trim();
+        const value = text === '' ? null : parseNumber(text);
+        if (text !== '' && !(value > 0)) errors.push(`${label.split(' badge')[0]} badge must be more than 0, or blank for off.`);
+        next.badgeThresholds[key] = value;
+      }
       const days = parseNumber(nudgeDays.value);
       if (!(days >= 0) || !Number.isInteger(days)) errors.push('Backup reminder must be a whole number of days (0 turns it off).');
       next.backupNudgeDays = days;
@@ -114,6 +141,8 @@ export function createSettingsView(context) {
           el('span', { class: 'field-label', text: 'Remind me to back up after this many days (0 = never)' }),
           nudgeDays,
         ),
+        el('h3', { text: 'Entry badges' }),
+        BADGES.map(([key, label]) => el('label', { class: 'field' }, el('span', { class: 'field-label', text: label }), badgeInputs[key])),
         errorBox,
         el('button', { class: 'btn primary', type: 'submit', text: 'Save settings' }),
         el('button', {
@@ -133,6 +162,7 @@ export function createSettingsView(context) {
           },
         }),
       ),
+      createAiCard(context),
       createBackupCard(context),
       el(
         'div',

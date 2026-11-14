@@ -28,6 +28,8 @@ export const DEFAULT_SETTINGS = {
   // Entry badge thresholds; null = off.
   badgeThresholds: { protein_g: null, sodium_mg: null, potassium_mg: null, phosphorus_mg: 150 },
   backupNudgeDays: 3,
+  // AI lookup. Stored on this device only; the key never leaves it except to the provider.
+  ai: { preset: 'openai', baseUrl: 'https://api.openai.com/v1', apiKey: '', model: '' },
 };
 
 /** Merge saved settings over the defaults so new fields always exist. */
@@ -39,6 +41,7 @@ export function mergeSettings(saved) {
     targets: { ...DEFAULT_SETTINGS.targets, ...(s.targets || {}) },
     colors: { ...DEFAULT_SETTINGS.colors, ...(s.colors || {}) },
     badgeThresholds: { ...DEFAULT_SETTINGS.badgeThresholds, ...(s.badgeThresholds || {}) },
+    ai: { ...DEFAULT_SETTINGS.ai, ...(s.ai || {}) },
   };
 }
 
@@ -218,4 +221,24 @@ export function nutrientSummary(nutrients) {
   );
   parts.push(`carbs ${formatCarbs(nutrients.effective_carbs_g)}`);
   return parts.join(' · ');
+}
+
+const BADGE_NAMES = { protein_g: 'High protein', sodium_mg: 'High sodium', potassium_mg: 'High potassium', phosphorus_mg: 'High P' };
+
+/**
+ * Badges for one entry. "High P" (phosphorus) shows at or above its threshold,
+ * or whenever the food is flagged for phosphate additives. The other nutrients
+ * only badge when a threshold has been set for them (off by default).
+ */
+export function entryBadges(entry, thresholds = {}) {
+  const badges = [];
+  const n = entry.nutrients || {};
+  for (const key of ['phosphorus_mg', 'sodium_mg', 'potassium_mg', 'protein_g']) {
+    const limit = Number(thresholds[key]);
+    const over = limit > 0 && (Number(n[key]) || 0) >= limit;
+    if (key === 'phosphorus_mg' && entry.phosphate_additives) badges.push(over ? 'High P · additives' : 'High P (additives)');
+    else if (over) badges.push(BADGE_NAMES[key]);
+  }
+  if (entry.estimated) badges.push('estimated');
+  return badges;
 }
