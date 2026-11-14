@@ -210,3 +210,12 @@ export function remainingLines(totals, targets) {
     return { key: n.key, letter: n.letter, name: n.name, text, danger: n.type === 'limit' && left < 0 };
   });
 }
+
+/** One-line summary of an entry: "200 kcal · P 2.5 g · S 40 mg · K 110 mg · H 75 mg · carbs 9 g" */
+export function nutrientSummary(nutrients) {
+  const parts = NUTRIENTS.map((n) =>
+    n.key === 'calories' ? formatValue(n, nutrients[n.key]) : `${n.letter} ${formatValue(n, nutrients[n.key])}`,
+  );
+  parts.push(`carbs ${formatCarbs(nutrients.effective_carbs_g)}`);
+  return parts.join(' · ');
+}

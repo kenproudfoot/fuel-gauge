@@ -110,6 +110,56 @@ export const store = {
     return record;
   },
 
+  /** Every entry ever logged, soft-deleted ones included. */
+  listAllEntries: () => run('entries', 'readonly', (s) => s.getAll()),
+
+  /** The food days that have at least one entry, oldest first. */
+  async listEntryDays() {
+    const db = await open();
+    return new Promise((resolve, reject) => {
+      const days = [];
+      const request = db.transaction('entries').objectStore('entries').index('day').openKeyCursor(null, 'nextunique');
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) return resolve(days);
+        days.push(cursor.key);
+        cursor.continue();
+      };
+      request.onerror = () => reject(request.error);
+    });
+  },
+
+  /** Write many records to one store in a single transaction. */
+  async putMany(storeName, records) {
+    if (records.length === 0) return;
+    const db = await open();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, 'readwrite');
+      const target = tx.objectStore(storeName);
+      for (const record of records) target.put(record);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error || new Error('Storage transaction aborted.'));
+    });
+  },
+
+  // --- finalized days ---
+  /** Summaries of finalized days, newest first. */
+  async listSummaries() {
+    const all = await run('summaries', 'readonly', (s) => s.getAll());
+    return all.sort((a, b) => b.day.localeCompare(a.day));
+  },
+  getSummary: (day) => run('summaries', 'readonly', (s) => s.get(day)),
+  putSummary: (summary) => run('summaries', 'readwrite', (s) => s.put(summary)),
+
+  /** A day's final chart image: { day, type, bytes: ArrayBuffer }. */
+  getPng: (day) => run('pngs', 'readonly', (s) => s.get(day)),
+  putPng: (record) => run('pngs', 'readwrite', (s) => s.put(record)),
+
+  // --- small facts (last backup time and the like) ---
+  getMeta: (key) => kvGet(`meta:${key}`),
+  setMeta: (key, value) => kvSet(`meta:${key}`, value),
+
   /** Soft delete: the entry stays stored and is excluded from totals. */
   async deleteEntry(entry) {
     return store.putEntry({ ...entry, deleted: true, deletedAt: Date.now() });

@@ -3,8 +3,10 @@
 import { el, parseNumber, toast } from './dom.js';
 import { NUTRIENTS, DEFAULT_SETTINGS, mergeSettings } from '../nutrients.js';
 import { APP_VERSION } from '../version.js';
+import { createBackupCard } from './backupUi.js';
 
-export function createSettingsView({ getSettings, saveSettings, storageInfo }) {
+export function createSettingsView(context) {
+  const { getSettings, saveSettings, storageInfo } = context;
   const root = el('section', { class: 'view' });
 
   async function refresh() {
@@ -37,6 +39,12 @@ export function createSettingsView({ getSettings, saveSettings, storageInfo }) {
       placeholder: 'not set',
     });
     const mealLabels = el('input', { type: 'checkbox', checked: settings.showMealLabels !== false });
+    const nudgeDays = el('input', {
+      class: 'big-input',
+      type: 'text',
+      inputMode: 'numeric',
+      value: String(settings.backupNudgeDays),
+    });
     const errorBox = el('div', { class: 'notice', hidden: true });
 
     const save = async (e) => {
@@ -50,6 +58,9 @@ export function createSettingsView({ getSettings, saveSettings, storageInfo }) {
         next.colors[n.key] = colorInputs[n.key].value;
       }
       next.showMealLabels = mealLabels.checked;
+      const days = parseNumber(nudgeDays.value);
+      if (!(days >= 0) || !Number.isInteger(days)) errors.push('Backup reminder must be a whole number of days (0 turns it off).');
+      next.backupNudgeDays = days;
       if (proteinMin.value.trim() === '') {
         next.proteinMin = null;
       } else {
@@ -97,6 +108,12 @@ export function createSettingsView({ getSettings, saveSettings, storageInfo }) {
           proteinMin,
         ),
         el('label', { class: 'check' }, mealLabels, el('span', { text: 'Show B / L / D labels on the chart' })),
+        el(
+          'label',
+          { class: 'field' },
+          el('span', { class: 'field-label', text: 'Remind me to back up after this many days (0 = never)' }),
+          nudgeDays,
+        ),
         errorBox,
         el('button', { class: 'btn primary', type: 'submit', text: 'Save settings' }),
         el('button', {
@@ -116,6 +133,7 @@ export function createSettingsView({ getSettings, saveSettings, storageInfo }) {
           },
         }),
       ),
+      createBackupCard(context),
       el(
         'div',
         { class: 'card' },

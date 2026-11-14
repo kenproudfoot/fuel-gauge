@@ -27,7 +27,7 @@ test('service worker caches every app file, and nothing that does not exist', ()
   const listed = [...sw.slice(sw.indexOf('const ASSETS'), sw.indexOf('];')).matchAll(/'([^']+)'/g)]
     .map((m) => m[1])
     .filter((p) => p !== './');
-  const onDisk = walk(docs).filter((p) => p !== 'sw.js');
+  const onDisk = walk(docs).filter((p) => p !== 'sw.js' && !p.endsWith('.md'));
   assert.deepEqual([...listed].sort(), [...onDisk].sort());
 });
 

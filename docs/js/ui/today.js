@@ -1,6 +1,9 @@
 // Today screen: the chart, the carbs line, voice/text logging, today's entries.
 
-import { el, parseNumber, toast, hideToast, onLongPress } from './dom.js';
+import { el, parseNumber, toast, hideToast, onLongPress, deliverFile } from './dom.js';
+import { buildDaySummary } from '../history.js';
+import { dayImageFile } from './finalize.js';
+import { runBackup, backupStatus } from './backupUi.js';
 import {
   NUTRIENTS,
   DANGER,
@@ -9,6 +12,7 @@ import {
   sumEntries,
   lastLoggedEntry,
   remainingLines,
+  nutrientSummary,
   formatValue,
   formatCarbs,
   formatCarbTotal,
@@ -25,13 +29,15 @@ const PLACEHOLDER = '12 g candied pecans';
 const MIC_ICON =
   '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8.5 21h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
-export function createTodayView({ store, getSettings, goTo }) {
+export function createTodayView(context) {
+  const { store, getSettings, goTo } = context;
   let foods = [];
   let entries = [];
   let day = foodDayKey();
 
   // Fixed skeleton, so re-rendering never takes focus away from the text field.
   const statusRow = el('div', { class: 'status-row' });
+  const nudgeBox = el('div');
   const chartBox = el('div', { class: 'chart' });
   const carbsBox = el('div');
   const input = el('input', {
@@ -53,6 +59,7 @@ export function createTodayView({ store, getSettings, goTo }) {
     'section',
     { class: 'view' },
     statusRow,
+    nudgeBox,
     chartBox,
     carbsBox,
     el(
@@ -96,6 +103,44 @@ export function createTodayView({ store, getSettings, goTo }) {
     day = foodDayKey();
     [foods, entries] = await Promise.all([store.listFoods(), store.listEntriesForDay(day)]);
     render();
+    renderBackupStatus(await backupStatus(context));
+  }
+
+  /** Backup age in the status row, and a gentle yellow nudge once it is overdue. */
+  function renderBackupStatus(status) {
+    statusRow.replaceChildren(
+      el('span', { text: `Food day: ${formatDayKey(day)}` }),
+      el('button', { class: 'status-link', type: 'button', text: status.label, onclick: () => goTo('settings') }),
+    );
+    if (!status.due) return nudgeBox.replaceChildren();
+    const nudge = el('button', {
+      class: 'nudge',
+      type: 'button',
+      text: `No backup for ${status.days} day${status.days === 1 ? '' : 's'}. Tap to back up.`,
+      onclick: async () => {
+        nudge.disabled = true;
+        try {
+          const result = await runBackup(context);
+          if (result.saved) toast('Backup saved');
+        } catch (error) {
+          toast(error.message || 'The backup could not be made.', { ms: 5000 });
+        }
+        renderBackupStatus(await backupStatus(context));
+      },
+    });
+    nudgeBox.replaceChildren(nudge);
+  }
+
+  /** Save today's chart as a PNG stamped and named with the date. */
+  async function saveChartImage(button) {
+    button.disabled = true;
+    try {
+      const summary = buildDaySummary(day, entries, getSettings().targets);
+      await deliverFile(await dayImageFile(summary, getSettings(), null));
+    } catch (error) {
+      toast(error.message || 'Could not save the image.');
+    }
+    button.disabled = false;
   }
 
   function render() {
@@ -103,12 +148,15 @@ export function createTodayView({ store, getSettings, goTo }) {
     const live = entries.filter((e) => !e.deleted);
     const totals = sumEntries(entries);
 
-    statusRow.replaceChildren(el('span', { text: `Food day: ${formatDayKey(day)}` }));
+    if (!statusRow.firstChild) statusRow.replaceChildren(el('span', { text: `Food day: ${formatDayKey(day)}` }));
     // Safe: the SVG is built by our own pure function from numbers and vetted colors.
     chartBox.innerHTML = renderChartSVG(totals, settings.targets, settings.colors, {
       showMealLabels: settings.showMealLabels,
     });
-    carbsBox.replaceChildren(renderCarbsLine(totals, lastLoggedEntry(entries)));
+    carbsBox.replaceChildren(
+      renderCarbsLine(totals, lastLoggedEntry(entries)),
+      el('button', { class: 'status-link save-image', type: 'button', text: 'Save chart image', onclick: (e) => saveChartImage(e.currentTarget) }),
+    );
     entriesBox.replaceChildren(renderEntries(live));
   }
 
@@ -560,12 +608,4 @@ export function createTodayView({ store, getSettings, goTo }) {
   }
 
   return { root, refresh };
-}
-
-function nutrientSummary(nutrients) {
-  const parts = NUTRIENTS.map((n) =>
-    n.key === 'calories' ? formatValue(n, nutrients[n.key]) : `${n.letter} ${formatValue(n, nutrients[n.key])}`,
-  );
-  parts.push(`carbs ${formatCarbs(nutrients.effective_carbs_g)}`);
-  return parts.join(' · ');
 }

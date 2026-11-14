@@ -6,6 +6,9 @@ import { el } from './ui/dom.js';
 import { createTodayView } from './ui/today.js';
 import { createFoodsView } from './ui/foods.js';
 import { createSettingsView } from './ui/settings.js';
+import { createHistoryView } from './ui/history.js';
+import { finalizePastDays } from './ui/finalize.js';
+import { foodDayKey } from './day.js';
 
 const main = document.getElementById('main');
 const tabs = document.getElementById('tabs');
@@ -57,6 +60,7 @@ async function boot() {
   };
   views = {
     today: createTodayView(context),
+    history: createHistoryView(context),
     foods: createFoodsView(context),
     settings: createSettingsView(context),
   };
@@ -66,12 +70,25 @@ async function boot() {
     if (button) goTo(button.dataset.view);
   });
 
-  // Coming back to the app may have crossed the 2 AM rollover.
+  // There is no background process: past days are filed whenever the app is
+  // opened, comes back to the front, or sits open across the 2 AM rollover.
+  let shownDay = foodDayKey();
+  const catchUp = async () => {
+    const day = foodDayKey();
+    const rolledOver = day !== shownDay;
+    shownDay = day;
+    const filed = await finalizePastDays(context).catch(() => 0);
+    if ((rolledOver || filed > 0) && (current === 'today' || current === 'history')) await views[current].refresh();
+  };
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && current === 'today') views.today.refresh();
+    if (document.visibilityState !== 'visible') return;
+    if (current === 'today') views.today.refresh();
+    catchUp();
   });
+  setInterval(catchUp, 60000);
 
   await goTo('today');
+  catchUp();
 }
 
 /**

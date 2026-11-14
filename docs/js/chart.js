@@ -115,21 +115,39 @@ export function chartLayout(totals, targets, colors, options = {}) {
   };
 }
 
+const CAPTION_H = 64;
+
 /**
  * Render the day chart as an SVG string.
- * options: { showMealLabels = true, size = 1000 (pixel width and height) }
+ * options:
+ *   showMealLabels = true
+ *   size = 1000            pixel width
+ *   caption                { left, right } adds a strip above the chart, used
+ *                          for saved images ("Fri, Nov 13, 2026" / "Carbs 142 g").
+ *                          The chart itself is drawn exactly as without it.
  */
 export function renderChartSVG(totals, targets, colors, options = {}) {
   const layout = chartLayout(totals, targets, colors, options);
   const size = Number(options.size) > 0 ? Number(options.size) : W;
+  const cap = options.caption ? CAPTION_H : 0;
   const out = [];
 
   out.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${size}" height="${size}" role="img" aria-label="${esc(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H + cap}" width="${size}" height="${r((size * (H + cap)) / W)}" role="img" aria-label="${esc(
       layout.bars.map((b) => `${b.letter} ${b.label.text}`).join(', '),
     )}" font-family="${FONT}">`,
   );
-  out.push(`<rect width="${W}" height="${H}" fill="#000000"/>`);
+  out.push(`<rect width="${W}" height="${H + cap}" fill="#000000"/>`);
+  if (cap) {
+    out.push(`<rect x="${GAP}" y="${GAP}" width="${W - 2 * GAP}" height="${cap - GAP}" fill="${BG}"/>`);
+    out.push(
+      `<text class="caption" x="${GAP + 14}" y="${cap - 16}" font-size="34" font-weight="600" fill="#FFFFFF">${esc(options.caption.left ?? '')}</text>`,
+    );
+    out.push(
+      `<text class="caption" x="${W - GAP - 14}" y="${cap - 16}" text-anchor="end" font-size="34" font-weight="600" fill="#C8C8D0">${esc(options.caption.right ?? '')}</text>`,
+    );
+    out.push(`<g transform="translate(0 ${cap})">`);
+  }
 
   for (const b of layout.bars) {
     const c = b.column;
@@ -184,6 +202,7 @@ export function renderChartSVG(totals, targets, colors, options = {}) {
     }
   }
 
+  if (cap) out.push('</g>');
   out.push('</svg>');
   return out.join('');
 }

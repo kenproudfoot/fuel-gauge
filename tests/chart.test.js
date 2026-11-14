@@ -173,3 +173,15 @@ test('output is a standalone SVG with no styles or external references', () => {
   assert.ok(!/style=|<style|href|url\(/.test(svg));
   assert.equal(svg.match(/class="bar"/g).length, 5);
 });
+
+test('a caption adds a strip above the chart without changing the chart itself', () => {
+  const plain = renderChartSVG(reference, targets, colors);
+  const captioned = renderChartSVG(reference, targets, colors, { caption: { left: 'Fri, Nov 13, 2026', right: 'Carbs 142 g' } });
+  assert.ok(captioned.includes('viewBox="0 0 1000 1064" width="1000" height="1064"'));
+  assert.ok(captioned.includes('>Fri, Nov 13, 2026</text>'));
+  assert.ok(captioned.includes('>Carbs 142 g</text>'));
+  assert.ok(captioned.includes('<g transform="translate(0 64)">'));
+  const body = (svg) => svg.slice(svg.indexOf('<rect x="6" y="6" width="192.8"'), svg.lastIndexOf('</svg>')).replace('</g>', '');
+  assert.equal(body(captioned), body(plain));
+  assert.ok(!renderChartSVG(reference, targets, colors, { caption: { left: '<b>&"', right: '' } }).includes('<b>'));
+});

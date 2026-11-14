@@ -21,18 +21,24 @@ export function parseNumber(text) {
 }
 
 let toastTimer = null;
+let toastOnClose = null;
 
 export function hideToast() {
   clearTimeout(toastTimer);
   document.getElementById('toast').hidden = true;
+  const onClose = toastOnClose;
+  toastOnClose = null;
+  onClose?.();
 }
 
 /**
  * Show a short message at the top of the screen.
- * options: { ms = 3000, actionLabel, onAction } adds a button such as "Undo".
+ * options: { ms = 3000, actionLabel, onAction } adds a button such as "Undo";
+ * onClose runs if the toast goes away without the button being tapped.
  */
 export function toast(message, options = {}) {
-  const { ms = 3000, actionLabel, onAction } = options;
+  const { ms = 3000, actionLabel, onAction, onClose } = options;
+  hideToast();
   const node = document.getElementById('toast');
   node.replaceChildren(el('span', { class: 'toast-text', text: message }));
   if (actionLabel && onAction) {
@@ -42,14 +48,15 @@ export function toast(message, options = {}) {
         type: 'button',
         text: actionLabel,
         onclick: () => {
+          toastOnClose = null;
           hideToast();
           onAction();
         },
       }),
     );
   }
+  toastOnClose = onClose || null;
   node.hidden = false;
-  clearTimeout(toastTimer);
   toastTimer = setTimeout(hideToast, ms);
 }
 
@@ -97,15 +104,17 @@ export function onLongPress(node, handler, ms = 500) {
 /**
  * Hand a file to the iOS share sheet (Save to Files, iCloud Drive, AirDrop),
  * or download it where sharing files is not supported.
- * Returns 'shared', 'downloaded' or 'cancelled'.
+ * Returns 'shared', 'downloaded', 'cancelled', or 'needs-tap' when the browser
+ * refused because too much time passed since the tap that started it.
  */
-export async function shareOrDownload(file) {
+export async function shareOrDownload(file, isRetry = false) {
   if (navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title: file.name });
       return 'shared';
     } catch (error) {
       if (error?.name === 'AbortError') return 'cancelled';
+      if (error?.name === 'NotAllowedError' && !isRetry) return 'needs-tap';
       // Anything else: fall through to a plain download.
     }
   }
@@ -116,4 +125,21 @@ export async function shareOrDownload(file) {
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
   return 'downloaded';
+}
+
+/**
+ * Deliver a file that took a moment to build. iOS only opens the share sheet
+ * straight from a tap, so if it refuses, offer a "Save" button to tap.
+ */
+export async function deliverFile(file) {
+  const outcome = await shareOrDownload(file);
+  if (outcome !== 'needs-tap') return outcome;
+  return new Promise((resolve) => {
+    toast(`${file.name} is ready`, {
+      ms: 120000,
+      actionLabel: 'Save',
+      onAction: async () => resolve(await shareOrDownload(file, true)),
+      onClose: () => resolve('cancelled'),
+    });
+  });
 }

@@ -27,7 +27,7 @@ Built in phases.
 - [x] **2. Chart**: the five-bar SVG chart, entry editing and undo, offline PWA
 - [x] **3. Voice and parser**: speech and text input, fuzzy food matching, foods-file import/export
 - [ ] **4. AI lookup**: nutrition lookup for unknown foods, with confirm-before-save
-- [ ] **5. Days and backup**: 2 AM rollover snapshots, history, zip backup and restore
+- [x] **5. Days and backup**: 2 AM rollover snapshots, history, zip backup and restore (done ahead of phase 4)
 - [ ] **6. Trend indicator**
 
 ## Layout
@@ -46,9 +46,12 @@ docs/               the app, served as-is by GitHub Pages (no build step)
     parser.js       pure: "half a banana" -> amount + unit + food, and commands
     fuzzy.js        pure: matching a spoken name to foods and aliases
     foodsFile.js    pure: the foods text file (parse, merge/replace plan, export)
+    history.js      pure: a finished day's summary record and readable text log
+    backup.js       pure: backup files (entries.csv, daily_summary.csv, ...) and restore planning
     units.js        pure: unit names and conversions
     day.js          pure: the 2 AM food-day boundary
-    ui/             screens (Today, Foods, Settings)
+    ui/             screens (Today, History, Foods, Settings), files, backup
+  vendor/           third-party code copied in (JSZip); see vendor/README.md
 tests/              node --test unit tests for the pure modules
 ```
 
@@ -61,6 +64,17 @@ Type or dictate into the field on the Today screen and press Return:
 
 Known foods are logged instantly and never need the network. If several foods
 match, the app asks which one. Press and hold an entry to edit or delete it.
+
+## Days, history and backup
+
+The food day rolls over at 2:00 AM. There is no background process, so past
+days are filed the next time the app is opened: each gets a stored summary, a
+readable text log and a PNG of its final chart. The History screen lists them.
+
+**Settings → Backup** builds one zip (entries.csv, daily_summary.csv, a PNG and
+text log per finished day, my-foods.txt, and settings.json with no API key) and
+hands it to the share sheet. It can also export a date range, and restore from
+a backup zip; restoring only adds what is missing.
 
 ## The foods file
 

@@ -69,8 +69,10 @@ Two things to know:
   Screen apps are exempt, which is another reason to always use the icon.
   **Settings → About** in the app shows whether storage is protected.
 
-Removing the app from the Home Screen deletes its data. Once backup lands
-(phase 5), export a backup first.
+Removing the app from the Home Screen deletes its data. Make a backup first
+(**Settings → Backup → Back up now**) and save the zip to Files or iCloud
+Drive. After re-adding the app, use **Restore from a backup zip** on the same
+screen.
 
 ## 5. How updates reach the phone
 

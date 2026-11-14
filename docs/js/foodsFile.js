@@ -39,7 +39,7 @@ export function splitCsvLine(line) {
   return out;
 }
 
-function csvField(value) {
+export function csvField(value) {
   const text = value == null ? '' : String(value);
   return /[",\n]/.test(text) || text !== text.trim() ? `"${text.replace(/"/g, '""')}"` : text;
 }
