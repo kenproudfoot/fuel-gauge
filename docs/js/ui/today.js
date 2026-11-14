@@ -46,7 +46,17 @@ export function createTodayView(context) {
   // Fixed skeleton, so re-rendering never takes focus away from the text field.
   const trendButton = el('button', { class: 'trend', type: 'button', 'aria-label': 'Trend' });
   // Header band: app icon on the left, the trend indicator on the right.
-  const header = el('header', { class: 'app-header' }, el('img', { class: 'app-logo', src: 'icons/icon.svg', alt: 'Fuel Gauge' }), trendButton);
+  const header = el(
+    'header',
+    { class: 'app-header' },
+    el(
+      'div',
+      { class: 'brand' },
+      el('img', { class: 'app-logo', src: 'icons/icon.svg', alt: '' }),
+      el('span', { class: 'wordmark', 'aria-label': 'Fuel Gauge' }, el('span', { class: 'wordmark-strong', text: 'FUEL' }), el('span', { class: 'wordmark-light', text: 'GAUGE' })),
+    ),
+    trendButton,
+  );
   const statusRow = el('div', { class: 'status-row' });
   const nudgeBox = el('div');
   const chartBox = el('div', { class: 'chart' });

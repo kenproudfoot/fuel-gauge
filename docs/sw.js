@@ -3,7 +3,7 @@
 // the phone download the new files and offer "Update available, tap to reload".
 // tests/sw.test.js checks that VERSION and ASSETS stay in step with docs/.
 
-const VERSION = '0.8.1';
+const VERSION = '0.8.2';
 const CACHE = `fuel-gauge-${VERSION}`;
 
 const ASSETS = [
@@ -12,6 +12,8 @@ const ASSETS = [
   'example-foods.txt',
   'manifest.webmanifest',
   'css/app.css',
+  'fonts/rajdhani-500.woff2',
+  'fonts/rajdhani-700.woff2',
   'icons/apple-touch-icon.png',
   'icons/icon-192.png',
   'icons/icon-512.png',

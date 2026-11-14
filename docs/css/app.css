@@ -13,6 +13,20 @@
   color-scheme: dark;
 }
 
+/* Rajdhani, vendored and subset to the app name; see fonts/README.md */
+@font-face {
+  font-family: 'Rajdhani';
+  font-weight: 500;
+  font-display: swap;
+  src: url('../fonts/rajdhani-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Rajdhani';
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/rajdhani-700.woff2') format('woff2');
+}
+
 * { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }
@@ -333,6 +347,16 @@ a.muted { text-decoration: underline; padding: 8px 0; }
   border-bottom: 1px solid var(--line);
 }
 .app-logo { width: 34px; height: 34px; flex: none; border-radius: 8px; box-shadow: 0 0 0 1px var(--line); }
+.brand { display: flex; align-items: center; gap: 10px; flex: none; }
+.wordmark {
+  font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 23px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.wordmark-strong { font-weight: 700; color: var(--text); }
+.wordmark-light { font-weight: 500; color: var(--muted); margin-left: 0.3em; }
 
 /* Trend indicator: words then icon, the whole thing is the tap target */
 .trend {
