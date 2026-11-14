@@ -30,7 +30,7 @@ Built in phases.
 - [x] **4b. USDA lookup**: sourced values from USDA FoodData Central, with a link to the record
 - [x] **4c. Label photo**: photograph a Nutrition Facts label and have the values read into the confirm card
 - [x] **5. Days and backup**: 2 AM rollover snapshots, history, zip backup and restore (done ahead of phase 4)
-- [ ] **6. Trend indicator**
+- [x] **6. Trend indicator**: status-row icon for calorie pace and limits, 7-day calorie average
 
 ## Layout
 
@@ -130,6 +130,24 @@ Presets, each checked for browser (CORS) access on 2026-11-14:
 Requests send only `model` and `messages` (JSON is asked for in the prompt and
 validated in the app, with one retry), because providers disagree on fields
 such as `response_format`.
+
+## Trend indicator
+
+A small icon at the top of Today, with a few words beside it:
+
+| Icon | Meaning |
+|---|---|
+| Green up arrow | Calories (and the protein minimum, if set) on pace; no limit close |
+| Yellow dash | Behind on calories or the protein minimum, or a limit at 85% of its target, or at 50% before the first checkpoint |
+| Red down arrow | A limit exceeded. Red is used for nothing else. |
+| Grey dot | Nothing logged yet today |
+
+Pace uses the eating window from Settings (default 6:30 AM to 9:30 PM), split
+in thirds: a third of the calorie goal is expected by 11:30 AM, two thirds by
+4:30 PM, all of it by 9:30 PM. Between checkpoints only the last one passed
+counts, which leaves room to catch up later in the day. Going over the calorie
+goal is never a problem. Tapping the icon lists the reasons and the 7-day
+calorie average (completed days only), which History also shows.
 
 ## Days, history and backup
 

@@ -17,6 +17,8 @@ export const NUTRIENT_KEYS = NUTRIENTS.map((n) => n.key);
 export const DEFAULT_SETTINGS = {
   targets: { calories: 2150, protein_g: 55, sodium_mg: 2000, potassium_mg: 2000, phosphorus_mg: 800 },
   proteinMin: null, // optional soft floor, unset by default
+  // When the day's eating happens; the trend indicator paces calories across it.
+  eatingWindow: { start: '06:30', end: '21:30' },
   colors: {
     calories: '#D63AE6',
     protein_g: '#F26B0F',
@@ -45,6 +47,7 @@ export function mergeSettings(saved) {
     badgeThresholds: { ...DEFAULT_SETTINGS.badgeThresholds, ...(s.badgeThresholds || {}) },
     ai: { ...DEFAULT_SETTINGS.ai, ...(s.ai || {}) },
     usda: { ...DEFAULT_SETTINGS.usda, ...(s.usda || {}) },
+    eatingWindow: { ...DEFAULT_SETTINGS.eatingWindow, ...(s.eatingWindow || {}) },
   };
 }
 

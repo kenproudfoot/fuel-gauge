@@ -6,6 +6,8 @@ import { formatAmount } from '../units.js';
 import { renderChartSVG } from '../chart.js';
 import { formatLongDay, summaryCarbs, dayFileStem } from '../history.js';
 import { finalizePastDays, dayImageFile } from './finalize.js';
+import { weeklyCalories, weeklyLabel } from '../trend.js';
+import { foodDayKey } from '../day.js';
 
 export function createHistoryView(context) {
   const { store, getSettings } = context;
@@ -36,7 +38,8 @@ export function createHistoryView(context) {
   }
 
   function renderList(summaries) {
-    const card = el('div', { class: 'card' }, el('h2', { text: 'History' }));
+    const week = weeklyCalories(summaries, foodDayKey(), getSettings().targets.calories);
+    const card = el('div', { class: 'card' }, el('h2', { text: 'History' }), week && el('p', { class: 'muted', text: weeklyLabel(week) }));
     if (summaries.length === 0) {
       card.append(el('p', { class: 'muted', text: 'No past days yet. Each day is filed here after it ends at 2 AM.' }));
     }

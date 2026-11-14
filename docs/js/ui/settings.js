@@ -6,6 +6,7 @@ import { APP_VERSION } from '../version.js';
 import { createBackupCard } from './backupUi.js';
 import { createAiCard } from './aiSettings.js';
 import { createUsdaCard } from './usdaSettings.js';
+import { parseClock } from '../trend.js';
 
 export function createSettingsView(context) {
   const { getSettings, saveSettings, storageInfo } = context;
@@ -40,6 +41,8 @@ export function createSettingsView(context) {
       value: settings.proteinMin == null ? '' : String(settings.proteinMin),
       placeholder: 'not set',
     });
+    const windowStart = el('input', { class: 'big-input', type: 'time', value: settings.eatingWindow.start, 'aria-label': 'Eating day starts' });
+    const windowEnd = el('input', { class: 'big-input', type: 'time', value: settings.eatingWindow.end, 'aria-label': 'Eating day ends' });
     const mealLabels = el('input', { type: 'checkbox', checked: settings.showMealLabels !== false });
     const nudgeDays = el('input', {
       class: 'big-input',
@@ -80,6 +83,11 @@ export function createSettingsView(context) {
         next.colors[n.key] = colorInputs[n.key].value;
       }
       next.showMealLabels = mealLabels.checked;
+      const start = windowStart.value.trim();
+      const end = windowEnd.value.trim();
+      if (parseClock(start) == null || parseClock(end) == null) errors.push('Set both eating-day times.');
+      else if (start === end) errors.push('The eating day must start and end at different times.');
+      next.eatingWindow = { start, end };
       for (const [key, label] of BADGES) {
         const text = badgeInputs[key].value.trim();
         const value = text === '' ? null : parseNumber(text);
@@ -135,6 +143,14 @@ export function createSettingsView(context) {
           el('span', { class: 'field-label', text: 'Protein minimum (g), optional' }),
           proteinMin,
         ),
+        el('h3', { text: 'Eating day (for the trend indicator)' }),
+        el(
+          'div',
+          { class: 'grid-2' },
+          el('label', { class: 'field' }, el('span', { class: 'field-label', text: 'Starts' }), windowStart),
+          el('label', { class: 'field' }, el('span', { class: 'field-label', text: 'Ends' }), windowEnd),
+        ),
+        el('p', { class: 'muted small-text', text: 'Calories are expected a third at a time across this window.' }),
         el('label', { class: 'check' }, mealLabels, el('span', { text: 'Show B / L / D labels on the chart' })),
         el(
           'label',

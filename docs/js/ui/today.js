@@ -26,6 +26,7 @@ import { matchFoods, scoreName } from '../fuzzy.js';
 import { createVoice } from './voice.js';
 import { isConfigured, lookupFood, parseWithAi, gramsFor, readLabel } from '../ai.js';
 import { photoToDataUrl } from './files.js';
+import { computeTrend, weeklyCalories, weeklyLabel, trendIconSVG, formatClock, TREND_COLORS } from '../trend.js';
 import { createConfirmCard } from './confirmCard.js';
 import { usdaConfigured, searchFoods, fetchFood, foodFromFdc, mergeEstimates, gramsFromPortions } from '../usda.js';
 
@@ -43,6 +44,7 @@ export function createTodayView(context) {
   let day = foodDayKey();
 
   // Fixed skeleton, so re-rendering never takes focus away from the text field.
+  const trendButton = el('button', { class: 'trend', type: 'button', 'aria-label': 'Trend' });
   const statusRow = el('div', { class: 'status-row' });
   const nudgeBox = el('div');
   const chartBox = el('div', { class: 'chart' });
@@ -90,6 +92,7 @@ export function createTodayView(context) {
   const root = el(
     'section',
     { class: 'view' },
+    trendButton,
     statusRow,
     nudgeBox,
     chartBox,
@@ -132,6 +135,55 @@ export function createTodayView(context) {
     respond();
     voice.toggle();
   });
+
+  let trend = null;
+
+  /** The trend indicator: icon + a few words. Tap for the reasons. */
+  function renderTrend() {
+    trend = computeTrend({ totals: sumEntries(entries), entryCount: entries.filter((e) => !e.deleted).length, settings: getSettings(), dayKey: day });
+    const icon = el('span', { class: 'trend-icon' });
+    icon.innerHTML = trendIconSVG(trend.state); // fixed shapes and colors from trend.js
+    const text = el('span', { class: 'trend-text', text: trend.label });
+    if (trend.state !== 'grey') text.style.color = TREND_COLORS[trend.state]; // red only when a limit is over
+    trendButton.replaceChildren(icon, text);
+    trendButton.setAttribute('aria-label', `Trend: ${trend.label}. Tap for details.`);
+  }
+  trendButton.addEventListener('click', () => showTrendCard());
+  // Pace depends on the clock, so the indicator is re-checked every minute.
+  setInterval(() => {
+    if (root.isConnected && foodDayKey() === day) renderTrend();
+  }, 60000);
+
+  async function showTrendCard() {
+    renderTrend();
+    const settings = getSettings();
+    const week = weeklyCalories(await store.listSummaries(), day, settings.targets.calories);
+    const marks = trend.marks;
+    const icon = el('span', { class: 'trend-icon' });
+    icon.innerHTML = trendIconSVG(trend.state);
+    const reasons = trend.reasons.map((reason) => {
+      const line = el('li', { text: reason.text });
+      if (reason.level === 'red') line.style.color = TREND_COLORS.red; // an exceeded limit is the one thing shown in red
+      return line;
+    });
+    respond(
+      el(
+        'div',
+        { class: 'card' },
+        el('div', { class: 'card-head' }, el('h2', {}, icon, ` ${trend.label}`), el('button', { class: 'btn small', type: 'button', text: 'Close', onclick: () => respond() })),
+        reasons.length
+          ? el('ul', { class: 'trend-reasons' }, reasons)
+          : el('p', { class: 'muted', text: trend.state === 'grey' ? 'Log something to start the day.' : 'Calories are on pace and no limit is close.' }),
+        marks &&
+          el('p', {
+            class: 'muted small-text',
+            text: `Calorie pace: a third of ${Math.round(settings.targets.calories)} kcal by ${formatClock(marks[0])}, two thirds by ${formatClock(marks[1])}, all of it by ${formatClock(marks[2])}.${settings.proteinMin > 0 ? ` Protein minimum ${settings.proteinMin} g on the same pace.` : ''}`,
+          }),
+        el('p', { text: weeklyLabel(week) }),
+        el('p', { class: 'muted small-text', text: 'Completed days only. Change the eating window in Settings.' }),
+      ),
+    );
+  }
 
   async function refresh() {
     day = foodDayKey();
@@ -192,6 +244,7 @@ export function createTodayView(context) {
       el('button', { class: 'status-link save-image', type: 'button', text: 'Save chart image', onclick: (e) => saveChartImage(e.currentTarget) }),
     );
     entriesBox.replaceChildren(renderEntries(live));
+    renderTrend();
   }
 
   function renderCarbsLine(totals, lastEntry) {
