@@ -1,0 +1,24 @@
+# This repo is public and holds only app code.
+# No personal data, exports, backups or API keys, ever.
+
+# Exports and backups
+*.txt
+*.zip
+*.csv
+data/
+
+# The one text file that ships: header + a commented example, no real values
+!example-foods.txt
+
+# Private planning notes and reference material
+fuel-gauge-claude-code-prompt.md
+chart[-_]reference.*
+.claude/
+
+# Secrets
+.env
+.env.*
+
+# Dev clutter
+node_modules/
+.DS_Store

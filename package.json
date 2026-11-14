@@ -1,0 +1,11 @@
+{
+  "name": "fuel-gauge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Voice-first food and kidney-nutrient logger. Local-only iPhone web app.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "serve": "python3 -m http.server 8080 --directory docs"
+  }
+}
