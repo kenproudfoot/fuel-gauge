@@ -10,6 +10,12 @@ export const COLUMNS = [
   'name', 'aliases', 'serving_amount', 'serving_unit', 'grams_per_serving', 'calories', 'protein_g',
   'sodium_mg', 'potassium_mg', 'phosphorus_mg', 'effective_carbs_g', 'phosphate_additives', 'source', 'notes',
 ];
+/** Where a saved food's values came from. Values typed or edited by hand are 'me'. */
+export const FOOD_SOURCES = ['me', 'ai-confirmed', 'usda-confirmed'];
+const foodSource = (value) => {
+  const source = String(value ?? '').trim().toLowerCase();
+  return FOOD_SOURCES.includes(source) ? source : 'me';
+};
 const REQUIRED = ['name', 'serving_amount', 'serving_unit', 'calories', 'protein_g', 'sodium_mg', 'potassium_mg', 'phosphorus_mg'];
 const COMMENT =
   '# name, aliases (| separated), serving_amount, serving_unit, grams_per_serving, calories, protein_g, sodium_mg, potassium_mg, phosphorus_mg, effective_carbs_g, phosphate_additives, source, notes';
@@ -80,8 +86,8 @@ export function parseFoodsFile(text) {
     }
     food.serving_unit = normalizeUnit(food.serving_unit);
     if (unitKind(food.serving_unit) === 'weight') food.grams_per_serving = null;
-    // Only two sources exist; anything else in a hand-edited file counts as yours.
-    food.source = (row.source || '').toLowerCase() === 'ai-confirmed' ? 'ai-confirmed' : 'me';
+    // Anything unrecognized in a hand-edited file counts as yours.
+    food.source = foodSource(row.source);
 
     const key = food.name.toLowerCase();
     if (seen.has(key)) {
@@ -137,7 +143,7 @@ export function serializeFoodsFile(foods) {
     COLUMNS.map((column) => {
       if (column === 'aliases') return csvField((food.aliases || []).join(' | '));
       if (column === 'phosphate_additives') return food.phosphate_additives ? 'true' : 'false';
-      if (column === 'source') return food.source === 'ai-confirmed' ? 'ai-confirmed' : 'me';
+      if (column === 'source') return foodSource(food.source);
       return csvField(food[column]);
     }).join(','),
   );

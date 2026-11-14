@@ -133,3 +133,10 @@ test('the shipped example file has the header and only a commented example', () 
   assert.deepEqual(skipped, []);
   assert.ok(text.split('\n').some((line) => line.trim() === HEADER));
 });
+
+test('usda-confirmed survives export and import', () => {
+  const food = { name: 'Eggo waffle', aliases: [], serving_amount: 1, serving_unit: 'each', grams_per_serving: 55, calories: 160, protein_g: 3, sodium_mg: 270, potassium_mg: 30.2, phosphorus_mg: 100.1, effective_carbs_g: 21.01, phosphate_additives: true, source: 'usda-confirmed', notes: 'USDA FoodData Central 2359968 (label data, Dec 2020)' };
+  const back = parseFoodsFile(serializeFoodsFile([food])).foods[0];
+  assert.equal(back.source, 'usda-confirmed');
+  assert.equal(back.notes, food.notes);
+});

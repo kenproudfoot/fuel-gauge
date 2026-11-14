@@ -27,6 +27,7 @@ Built in phases.
 - [x] **2. Chart**: the five-bar SVG chart, entry editing and undo, offline PWA
 - [x] **3. Voice and parser**: speech and text input, fuzzy food matching, foods-file import/export
 - [x] **4. AI lookup**: nutrition lookup for unknown foods, with confirm-before-save
+- [x] **4b. USDA lookup**: sourced values from USDA FoodData Central, with a link to the record
 - [x] **5. Days and backup**: 2 AM rollover snapshots, history, zip backup and restore (done ahead of phase 4)
 - [ ] **6. Trend indicator**
 
@@ -49,6 +50,7 @@ docs/               the app, served as-is by GitHub Pages (no build step)
     history.js      pure: a finished day's summary record and readable text log
     backup.js       pure: backup files (entries.csv, daily_summary.csv, ...) and restore planning
     ai.js           OpenAI-compatible client, prompts, reply validation (fetch is injectable)
+    usda.js         USDA FoodData Central search and record reading (fetch is injectable)
     units.js        pure: unit names and conversions
     day.js          pure: the 2 AM food-day boundary
     ui/             screens (Today, History, Foods, Settings), files, backup
@@ -65,6 +67,28 @@ Type or dictate into the field on the Today screen and press Return:
 
 Known foods are logged instantly and never need the network. If several foods
 match, the app asks which one. Press and hold an entry to edit or delete it.
+
+## USDA lookup
+
+An AI model answers from memory and cannot say where a number came from. With a
+free [USDA FoodData Central](https://fdc.nal.usda.gov/) API key under
+**Settings → USDA lookup**, a food that is not in the list is searched there
+first. The app lists the matching records; picking one opens the confirm card
+with:
+
+- for packaged foods, the values printed on the manufacturer's label, per label
+  serving, plus anything else the record holds (phosphorus, when the
+  manufacturer reported it);
+- for plain foods, USDA's own figures per 100 g;
+- a link to the record, and its date, since label data can be years old.
+
+Each value is tagged **USDA**. A value USDA does not have is never taken as 0:
+if AI lookup is also set up it is estimated and tagged **estimated**, and
+otherwise the field is left blank to fill in. A barcode often has several
+records over the years, so the newest one is fetched. Foods saved from here have
+the source `usda-confirmed` and keep the record number in their notes. Only the
+food words are sent to USDA, and the key is stored and protected the same way
+as the AI key.
 
 ## AI lookup
 

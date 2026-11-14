@@ -1,0 +1,175 @@
+{
+ "fdcId": 752908,
+ "description": "Kellogg's Eggo Waffles Original Thick & Fluffy 11.6oz",
+ "dataType": "Branded",
+ "publicationDate": "2/27/2020",
+ "modifiedDate": "2/6/2018",
+ "brandOwner": "Kellogg Company US",
+ "gtinUpc": "00038000492761",
+ "householdServingFullText": "1 Waffle",
+ "ingredients": "Enriched flour (wheat flour, niacin, reduced iron, vitamin B1 [thiamin mononitrate], vitamin B2 [riboflavin], folic acid), water, vegetable oil (soybean, palm and/or canola), eggs, sugar, leavening (baking soda, sodium aluminum phosphate, monocalcium phosphate), contains 2% or less of salt, natural flavor, whey, soy lecithin, beta-carotene for color.Vitamins and Minerals: Calcium carbonate, reduced iron, vitamin A palmitate, vitamin B6 (pyridoxine hydrochloride), vitamin B12.",
+ "servingSize": 55,
+ "servingSizeUnit": "g",
+ "labelNutrients": {
+  "fat": {
+   "value": 7.48
+  },
+  "saturatedFat": {
+   "value": 1.92
+  },
+  "transFat": {
+   "value": 0.11
+  },
+  "cholesterol": {
+   "value": 8.8
+  },
+  "sodium": {
+   "value": 290
+  },
+  "carbohydrates": {
+   "value": 20
+  },
+  "fiber": {
+   "value": 0.55
+  },
+  "sugars": {
+   "value": 2.48
+  },
+  "protein": {
+   "value": 3.02
+  },
+  "calcium": {
+   "value": 261
+  },
+  "iron": {
+   "value": 3.68
+  },
+  "potassium": {
+   "value": 40.7
+  },
+  "calories": {
+   "value": 158
+  }
+ },
+ "foodNutrients": [
+  {
+   "nutrient": {
+    "id": 1008,
+    "name": "Energy",
+    "unitName": "kcal"
+   },
+   "amount": 287
+  },
+  {
+   "nutrient": {
+    "id": 1005,
+    "name": "Carbohydrate, by difference",
+    "unitName": "g"
+   },
+   "amount": 36.4
+  },
+  {
+   "nutrient": {
+    "id": 1079,
+    "name": "Fiber, total dietary",
+    "unitName": "g"
+   },
+   "amount": 1
+  },
+  {
+   "nutrient": {
+    "id": 1093,
+    "name": "Sodium, Na",
+    "unitName": "mg"
+   },
+   "amount": 527
+  },
+  {
+   "nutrient": {
+    "id": 1091,
+    "name": "Phosphorus, P",
+    "unitName": "mg"
+   },
+   "amount": 358
+  },
+  {
+   "nutrient": {
+    "id": 1003,
+    "name": "Protein",
+    "unitName": "g"
+   },
+   "amount": 5.5
+  },
+  {
+   "nutrient": {
+    "id": 1092,
+    "name": "Potassium, K",
+    "unitName": "mg"
+   },
+   "amount": 74
+  }
+ ],
+ "foodUpdateLog": [
+  {
+   "fdcId": 2359968,
+   "description": "ORIGINAL BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "12/7/2022",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 2092089,
+   "description": "ORIGINAL BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "10/28/2021",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 1601634,
+   "description": "ORIGINAL BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "3/19/2021",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 1309520,
+   "description": "ORIGINAL BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "2/26/2021",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 1148803,
+   "description": "ORIGINAL BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "12/30/2020",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 1115686,
+   "description": "ORIGINAL THICK & FLUFFY BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "11/13/2020",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 852892,
+   "description": "ORIGINAL THICK & FLUFFY BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "5/28/2020",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 752908,
+   "description": "Kellogg's Eggo Waffles Original Thick & Fluffy 11.6oz",
+   "publicationDate": "2/27/2020",
+   "gtinUpc": "00038000492761"
+  },
+  {
+   "fdcId": 653698,
+   "description": "ORIGINAL THICK & FLUFFY BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "12/6/2019",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 345661,
+   "description": "Kellogg's Eggo Waffles Original Thick & Fluffy 11.6oz",
+   "publicationDate": "4/1/2019",
+   "gtinUpc": "00038000492761"
+  }
+ ],
+ "foodPortions": []
+}

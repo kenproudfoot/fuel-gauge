@@ -3,7 +3,7 @@
 // the phone download the new files and offer "Update available, tap to reload".
 // tests/sw.test.js checks that VERSION and ASSETS stay in step with docs/.
 
-const VERSION = '0.5.1';
+const VERSION = '0.6.0';
 const CACHE = `fuel-gauge-${VERSION}`;
 
 const ASSETS = [
@@ -28,6 +28,7 @@ const ASSETS = [
   'js/parser.js',
   'js/store.js',
   'js/units.js',
+  'js/usda.js',
   'js/version.js',
   'js/ui/aiSettings.js',
   'js/ui/backupUi.js',
@@ -39,6 +40,7 @@ const ASSETS = [
   'js/ui/history.js',
   'js/ui/settings.js',
   'js/ui/today.js',
+  'js/ui/usdaSettings.js',
   'js/ui/voice.js',
   'vendor/jszip.min.js',
 ];

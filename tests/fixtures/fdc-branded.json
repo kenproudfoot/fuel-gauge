@@ -1,0 +1,180 @@
+{
+ "fdcId": 2359968,
+ "description": "ORIGINAL BELGIAN STYLE WAFFLES, ORIGINAL",
+ "dataType": "Branded",
+ "publicationDate": "12/7/2022",
+ "modifiedDate": "12/1/2020",
+ "brandOwner": "The Kellogg Company ",
+ "brandName": "EGGO",
+ "subbrandName": "THICK & FLUFFY",
+ "gtinUpc": "038000492761",
+ "householdServingFullText": "1 WAFFLE",
+ "ingredients": "ENRICHED FLOUR (WHEAT FLOUR, NIACIN, REDUCED IRON, VITAMIN B1 (THIAMIN MONONITRATE), VITAMIN B2 (RIBOFLAVIN), FOLIC ACID), WATER, VEGETABLE OIL (SOYBEAN, PALM AND/OR CANOLA), SUGAR, EGGS, LEAVENING (BAKING SODA, SODIUM ALUMINUM PHOSPHATE, MONOCALCIUM PHOSPHATE), CONTAINS 2% OR LESS OF SALT, FRUCTOSE, VANILLA BEANS, WHEY, SOY LECITHIN, VANILLA EXTRACT. VITAMINS AND MINERALS: CALCIUM CARBONATE, VITAMIN A PALMITATE, REDUCED IRON, VITAMIN B6 (PYRIDOXINE HYDROCHLORIDE), VITAMIN B12.",
+ "servingSize": 55,
+ "servingSizeUnit": "g",
+ "labelNutrients": {
+  "fat": {
+   "value": 7
+  },
+  "saturatedFat": {
+   "value": 2
+  },
+  "transFat": {
+   "value": 0
+  },
+  "cholesterol": {
+   "value": 9.9
+  },
+  "sodium": {
+   "value": 270
+  },
+  "carbohydrates": {
+   "value": 22
+  },
+  "fiber": {
+   "value": 0.99
+  },
+  "sugars": {
+   "value": 6
+  },
+  "protein": {
+   "value": 3
+  },
+  "calcium": {
+   "value": 260
+  },
+  "iron": {
+   "value": 3.6
+  },
+  "potassium": {
+   "value": 30.2
+  },
+  "addedSugar": {
+   "value": 6
+  },
+  "calories": {
+   "value": 160
+  }
+ },
+ "foodNutrients": [
+  {
+   "nutrient": {
+    "id": 1005,
+    "name": "Carbohydrate, by difference",
+    "unitName": "g"
+   },
+   "amount": 40
+  },
+  {
+   "nutrient": {
+    "id": 1079,
+    "name": "Fiber, total dietary",
+    "unitName": "g"
+   },
+   "amount": 1.8
+  },
+  {
+   "nutrient": {
+    "id": 1091,
+    "name": "Phosphorus, P",
+    "unitName": "mg"
+   },
+   "amount": 182
+  },
+  {
+   "nutrient": {
+    "id": 1008,
+    "name": "Energy",
+    "unitName": "kcal"
+   },
+   "amount": 291
+  },
+  {
+   "nutrient": {
+    "id": 1003,
+    "name": "Protein",
+    "unitName": "g"
+   },
+   "amount": 5.45
+  },
+  {
+   "nutrient": {
+    "id": 1093,
+    "name": "Sodium, Na",
+    "unitName": "mg"
+   },
+   "amount": 491
+  },
+  {
+   "nutrient": {
+    "id": 1092,
+    "name": "Potassium, K",
+    "unitName": "mg"
+   },
+   "amount": 55
+  }
+ ],
+ "foodUpdateLog": [
+  {
+   "fdcId": 2359968,
+   "description": "ORIGINAL BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "12/7/2022",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 2092089,
+   "description": "ORIGINAL BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "10/28/2021",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 1601634,
+   "description": "ORIGINAL BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "3/19/2021",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 1309520,
+   "description": "ORIGINAL BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "2/26/2021",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 1148803,
+   "description": "ORIGINAL BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "12/30/2020",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 1115686,
+   "description": "ORIGINAL THICK & FLUFFY BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "11/13/2020",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 852892,
+   "description": "ORIGINAL THICK & FLUFFY BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "5/28/2020",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 752908,
+   "description": "Kellogg's Eggo Waffles Original Thick & Fluffy 11.6oz",
+   "publicationDate": "2/27/2020",
+   "gtinUpc": "00038000492761"
+  },
+  {
+   "fdcId": 653698,
+   "description": "ORIGINAL THICK & FLUFFY BELGIAN STYLE WAFFLES, ORIGINAL",
+   "publicationDate": "12/6/2019",
+   "gtinUpc": "038000492761"
+  },
+  {
+   "fdcId": 345661,
+   "description": "Kellogg's Eggo Waffles Original Thick & Fluffy 11.6oz",
+   "publicationDate": "4/1/2019",
+   "gtinUpc": "00038000492761"
+  }
+ ],
+ "foodPortions": []
+}

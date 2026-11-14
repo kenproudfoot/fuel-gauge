@@ -26,6 +26,7 @@ import { matchFoods, scoreName } from '../fuzzy.js';
 import { createVoice } from './voice.js';
 import { isConfigured, lookupFood, parseWithAi, gramsFor } from '../ai.js';
 import { createConfirmCard } from './confirmCard.js';
+import { usdaConfigured, searchFoods, fetchFood, foodFromFdc, mergeEstimates, gramsFromPortions } from '../usda.js';
 
 const UNDO_MS = 10000;
 const PLACEHOLDER = '12 g candied pecans';
@@ -191,9 +192,10 @@ export function createTodayView(context) {
   }
 
   const aiConfig = () => getSettings().ai;
+  const usdaConfig = () => getSettings().usda;
   let aiAbort = null;
 
-  /** Show a "working" card with a Cancel button while an AI request runs. */
+  /** Show a "working" card with a Cancel button while an AI or USDA request runs. */
   async function withAi(message, work) {
     aiAbort?.abort();
     const controller = new AbortController();
@@ -292,17 +294,129 @@ export function createTodayView(context) {
           onclick: () => goTo('foods', { newName: command.food }),
         }),
         !isConfigured(aiConfig()) &&
-          el('button', { class: 'btn', type: 'button', text: 'Set up AI lookup', onclick: () => goTo('settings') }),
+          !usdaConfigured(usdaConfig()) &&
+          el('button', { class: 'btn', type: 'button', text: 'Set up food lookup', onclick: () => goTo('settings') }),
       ),
     );
   }
 
-  /** Food not in my list: ask the AI, then show a confirm card. Nothing is logged without a tap. */
+  /**
+   * Food not in my list: search USDA when a key is set, otherwise ask the AI.
+   * Either way a confirm card follows, and nothing is logged without a tap.
+   */
   async function lookUp(command) {
-    if (!isConfigured(aiConfig())) return showNotFound(command);
+    if (usdaConfigured(usdaConfig())) return searchUsda(command);
+    if (isConfigured(aiConfig())) return lookUpWithAi(command);
+    return showNotFound(command);
+  }
+
+  /** Offer matching USDA records to pick from. */
+  async function searchUsda(command) {
+    const ai = isConfigured(aiConfig());
+    let candidates;
+    try {
+      candidates = await withAi(`Searching USDA for “${command.food}”…`, (deps) => searchFoods(usdaConfig(), command.food, deps));
+    } catch (error) {
+      if (error.kind === 'cancelled') return respond();
+      if (ai) return lookUpWithAi(command, `${error.message} Asking AI instead.`);
+      return showNotFound(command, `${error.message} You can enter the values for “${command.food}” yourself.`);
+    }
+    if (candidates.length === 0) {
+      if (ai) return lookUpWithAi(command, 'USDA has no match. Asking AI instead.');
+      return showNotFound(command, `USDA has no match for “${command.food}”. You can enter its values yourself.`);
+    }
+    respond(
+      el(
+        'div',
+        { class: 'card' },
+        el('h2', { text: 'USDA matches' }),
+        el('p', { class: 'muted', text: 'Pick the one that matches what you ate.' }),
+        el(
+          'div',
+          { class: 'food-list' },
+          candidates.map((candidate) =>
+            el(
+              'button',
+              { class: 'food-pick stacked', type: 'button', onclick: () => pickUsda(command, candidate) },
+              el('span', { class: 'food-name', text: candidate.title }),
+              el('span', { class: 'muted', text: candidate.detail }),
+            ),
+          ),
+        ),
+        ai && el('button', { class: 'btn', type: 'button', text: 'None of these: ask AI', onclick: () => lookUpWithAi(command) }),
+        el(
+          'div',
+          { class: 'row' },
+          el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: () => respond() }),
+          el('button', { class: 'btn', type: 'button', text: 'Enter values myself', onclick: () => goTo('foods', { newName: command.food }) }),
+        ),
+      ),
+    );
+    return responseBox.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  /** Fetch the chosen USDA record, fill any gaps with AI, and show the confirm card. */
+  async function pickUsda(command, candidate) {
+    const ai = isConfigured(aiConfig());
+    let record;
+    try {
+      record = await withAi(`Getting USDA values for “${candidate.title}”…`, (deps) => fetchFood(usdaConfig(), candidate.fdcId, deps));
+    } catch (error) {
+      if (error.kind === 'cancelled') return respond();
+      return showNotFound(command, `${error.message} You can enter the values for “${command.food}” yourself.`);
+    }
+    let lookup = foodFromFdc(record);
+    if (!lookup) {
+      if (ai) return lookUpWithAi(command, 'That USDA record has no nutrient values. Asking AI instead.');
+      return showNotFound(command, `That USDA record has no nutrient values. You can enter the values for “${command.food}” yourself.`);
+    }
+
+    // What USDA lacks (often phosphorus) is estimated by AI and marked as such;
+    // without AI, or if it fails, those fields stay blank to fill in by hand.
+    if (lookup.missing.length && ai) {
+      const lacking = NUTRIENTS.filter((n) => lookup.missing.includes(n.key)).map((n) => n.name.toLowerCase()).join(', ');
+      const weight = servingsFor(lookup.food, 1, 'g') != null ? 1 / servingsFor(lookup.food, 1, 'g') : null;
+      const query = weight
+        ? { food: lookup.food.name, amount: Math.round(weight * 10) / 10, unit: 'g' }
+        : { food: lookup.food.name, amount: lookup.food.serving_amount, unit: lookup.food.serving_unit };
+      try {
+        const estimate = await withAi(`USDA has no ${lacking} for this. Asking AI to estimate…`, (deps) => lookupFood(aiConfig(), query, deps));
+        lookup = mergeEstimates(lookup, estimate.food);
+      } catch {
+        // Cancelled or failed: carry on with the USDA values alone.
+      }
+    }
+
+    // An amount the food's serving can't convert ("1 cup" of a per-100 g food):
+    // use USDA's own measures if the record has them, else an AI weight estimate.
+    let asked = command;
+    let note = null;
+    if (command.amount != null && servingsFor(lookup.food, command.amount, command.unit) == null && servingsFor(lookup.food, 1, 'g') != null) {
+      const said = formatAmount(command.amount, command.unit);
+      const measured = gramsFromPortions(record, command.amount, command.unit);
+      if (measured) {
+        asked = { ...command, amount: measured, unit: 'g' };
+        note = `${said} is ${measured} g by USDA's measure for this food.`;
+      } else if (ai) {
+        try {
+          const estimate = await withAi(`Converting ${said} to grams…`, (deps) =>
+            gramsFor(aiConfig(), { food: lookup.food.name, amount: command.amount, unit: command.unit }, deps),
+          );
+          asked = { ...command, amount: estimate.grams, unit: 'g' };
+          note = `AI estimate: ${said} is about ${estimate.grams} g${estimate.notes ? ` (${estimate.notes})` : ''}. Check the values before logging.`;
+        } catch {
+          // The card will show one serving and say the amount couldn't be converted.
+        }
+      }
+    }
+    return showConfirm(lookup, command, asked, note);
+  }
+
+  /** Ask the AI for the food. `reason` is shown while it works (e.g. why USDA was skipped). */
+  async function lookUpWithAi(command, reason) {
     let lookup;
     try {
-      lookup = await withAi(`Looking up “${command.food}”…`, (deps) => lookupFood(aiConfig(), command, deps));
+      lookup = await withAi([reason, `Looking up “${command.food}”…`].filter(Boolean).join(' '), (deps) => lookupFood(aiConfig(), command, deps));
     } catch (error) {
       if (error.kind === 'cancelled') return respond();
       const offline = error.kind === 'network';
@@ -313,27 +427,39 @@ export function createTodayView(context) {
           : `${error.message} You can enter the values for “${command.food}” yourself.`,
       );
     }
+    return showConfirm(lookup, command, command, null);
+  }
+
+  /**
+   * The confirm card for a looked-up food. `command` is what was said (its food
+   * words become an alias); `asked` is the amount to show, which may have been
+   * converted to grams.
+   */
+  function showConfirm(lookup, command, asked, note) {
+    const fromUsda = Boolean(lookup.ref);
     respond(
       createConfirmCard({
         lookup,
-        command,
+        command: asked,
+        note,
         onCancel: () => respond(),
         onLogSave: async (result) => {
-          // Confirmed by me: saved to my foods as ai-confirmed, with what I said as an alias.
+          // Confirmed by me: saved to my foods with where it came from, and what I said as an alias.
           let name = result.name;
-          if (foods.some((f) => f.name.trim().toLowerCase() === name.toLowerCase())) name = `${name} (AI)`;
+          if (foods.some((f) => f.name.trim().toLowerCase() === name.toLowerCase())) name = `${name} (${fromUsda ? 'USDA' : 'AI'})`;
           const alias = command.food.toLowerCase() === name.toLowerCase() ? [] : [command.food];
-          const food = await store.putFood({ ...result.food, name, aliases: alias, source: 'ai-confirmed' });
+          const food = await store.putFood({ ...result.food, name, aliases: alias, source: fromUsda ? 'usda-confirmed' : 'ai-confirmed' });
           clearInput();
           await saveNewEntry(food, { ...result, ts: Date.now() });
         },
         onLogOnce: async (result) => {
-          // Logged without saving the food: the entry stays marked estimated.
+          // Logged without saving the food: the entry stays marked estimated
+          // when any of its values is an AI estimate.
           clearInput();
           await saveNewEntry(
-            { id: null, name: result.name, source: 'ai', phosphate_additives: result.food.phosphate_additives },
+            { id: null, name: result.name, source: fromUsda ? 'usda' : 'ai', phosphate_additives: result.food.phosphate_additives },
             { ...result, ts: Date.now() },
-            true,
+            result.estimated,
           );
         },
       }),

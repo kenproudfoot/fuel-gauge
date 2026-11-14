@@ -38,6 +38,7 @@ function fromCsv(text) {
   });
 }
 
+const ENTRY_SOURCES = ['me', 'ai-confirmed', 'usda-confirmed', 'ai', 'usda'];
 const num = (text) => (text === '' || text == null ? null : Number(text));
 const bool = (text) => text === 'true';
 
@@ -97,7 +98,7 @@ export function parseEntriesCsv(text) {
       unit: row.unit,
       servings: num(row.servings),
       nutrients,
-      source: row.source === 'ai-confirmed' ? 'ai-confirmed' : 'me',
+      source: ENTRY_SOURCES.includes(row.source) ? row.source : 'me',
       estimated: bool(row.estimated),
       phosphate_additives: bool(row.phosphate_additives),
       deleted: bool(row.deleted),

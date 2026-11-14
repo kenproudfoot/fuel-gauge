@@ -30,6 +30,8 @@ export const DEFAULT_SETTINGS = {
   backupNudgeDays: 3,
   // AI lookup. Stored on this device only; the key never leaves it except to the provider.
   ai: { preset: 'openai', baseUrl: 'https://api.openai.com/v1', apiKey: '', model: '' },
+  // USDA FoodData Central lookup. The key is stored on this device only.
+  usda: { apiKey: '' },
 };
 
 /** Merge saved settings over the defaults so new fields always exist. */
@@ -42,6 +44,7 @@ export function mergeSettings(saved) {
     colors: { ...DEFAULT_SETTINGS.colors, ...(s.colors || {}) },
     badgeThresholds: { ...DEFAULT_SETTINGS.badgeThresholds, ...(s.badgeThresholds || {}) },
     ai: { ...DEFAULT_SETTINGS.ai, ...(s.ai || {}) },
+    usda: { ...DEFAULT_SETTINGS.usda, ...(s.usda || {}) },
   };
 }
 

@@ -1,0 +1,1287 @@
+{
+ "totalHits": 3695,
+ "foods": [
+  {
+   "fdcId": 752908,
+   "description": "Kellogg's Eggo Waffles Original Thick & Fluffy 11.6oz",
+   "dataType": "Branded",
+   "gtinUpc": "00038000492761",
+   "publishedDate": "2020-02-27",
+   "modifiedDate": "2018-02-06",
+   "brandOwner": "Kellogg Company US",
+   "servingSize": 55,
+   "servingSizeUnit": "g",
+   "householdServingFullText": "1 Waffle",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 5.5
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 36.4
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 287
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 1
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 358
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 74
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 527
+    }
+   ]
+  },
+  {
+   "fdcId": 753046,
+   "description": "Kellogg's Eggo Waffles Thick & Fluffy Pumpkin 11.6oz",
+   "dataType": "Branded",
+   "gtinUpc": "00038000156922",
+   "publishedDate": "2020-02-27",
+   "modifiedDate": "2017-11-22",
+   "brandOwner": "Kellogg Company US",
+   "servingSize": 55,
+   "servingSizeUnit": "g",
+   "householdServingFullText": "1 Waffle",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 5
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 40.1
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 285
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 1.5
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 354
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 81
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 482
+    }
+   ]
+  },
+  {
+   "fdcId": 753052,
+   "description": "Kellogg's Eggo Waffles Thick & Fluffy Pumpkin 69.8oz",
+   "dataType": "Branded",
+   "gtinUpc": "00038000159718",
+   "publishedDate": "2020-02-27",
+   "modifiedDate": "2017-11-07",
+   "brandOwner": "Kellogg Company US",
+   "servingSize": 55,
+   "servingSizeUnit": "g",
+   "householdServingFullText": "1 Waffle",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 5
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 40.1
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 285
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 1.5
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 354
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 81
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 482
+    }
+   ]
+  },
+  {
+   "fdcId": 752542,
+   "description": "Kellogg's Eggo Waffles Brown Sugar Cinnamon Thick & Fluffy 11.6oz",
+   "dataType": "Branded",
+   "gtinUpc": "00038000492747",
+   "publishedDate": "2020-02-27",
+   "modifiedDate": "2018-02-06",
+   "brandOwner": "Kellogg Company US",
+   "servingSize": 55,
+   "servingSizeUnit": "g",
+   "householdServingFullText": "1 Waffle",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 4.5
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 45.3
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 304
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 1.2
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 320
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 70
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 449
+    }
+   ]
+  },
+  {
+   "fdcId": 168803,
+   "description": "Frostings, white, fluffy, dry mix",
+   "dataType": "SR Legacy",
+   "publishedDate": "2019-04-01",
+   "foodNutrients": [
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 0
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 94.9
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 371
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 117
+    },
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 2.3
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 7
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 234
+    }
+   ]
+  },
+  {
+   "fdcId": 2708327,
+   "description": "Waffle, chocolate",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 9.07
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 48.64
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 437
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 2.9
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 369
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 258
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 517
+    }
+   ]
+  },
+  {
+   "fdcId": 2708328,
+   "description": "Waffle, cinnamon",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 8.7
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 41.67
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 373
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 2.7
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 383
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 205
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 596
+    }
+   ]
+  },
+  {
+   "fdcId": 2708326,
+   "description": "Waffle, fruit",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 6.94
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 36.25
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 307
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 2.8
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 303
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 175
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 467
+    }
+   ]
+  },
+  {
+   "fdcId": 2708312,
+   "description": "Waffle, NFS",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 7.42
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 48.39
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 309
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 2.6
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 444
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 138
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 460
+    }
+   ]
+  },
+  {
+   "fdcId": 2708325,
+   "description": "Waffle, plain",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 8.7
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 41.5
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 373
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 2.5
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 383
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 205
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 597
+    }
+   ]
+  },
+  {
+   "fdcId": 2708324,
+   "description": "Waffle, school",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 7.14
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 49.16
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 257
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 4.3
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 286
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 164
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 557
+    }
+   ]
+  },
+  {
+   "fdcId": 169626,
+   "description": "Frostings, white, fluffy, dry mix, prepared with water",
+   "dataType": "SR Legacy",
+   "publishedDate": "2019-04-01",
+   "foodNutrients": [
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 0
+    },
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 1.5
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 5
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 156
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 62.6
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 244
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 77
+    }
+   ]
+  },
+  {
+   "fdcId": 2708316,
+   "description": "Waffle, chocolate, frozen",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 7.43
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 48.94
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 320
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 2.6
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 432
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 150
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 441
+    }
+   ]
+  },
+  {
+   "fdcId": 2708315,
+   "description": "Waffle, fruit, frozen",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 7.07
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 46.58
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 296
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 2.6
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 422
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 134
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 437
+    }
+   ]
+  },
+  {
+   "fdcId": 2708330,
+   "description": "Waffle, gluten free",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 2.72
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 43.05
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 263
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 1.4
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 359
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 124
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 505
+    }
+   ]
+  },
+  {
+   "fdcId": 2708313,
+   "description": "Waffle, plain, frozen",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 7.42
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 48.39
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 309
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 2.6
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 444
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 138
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 460
+    }
+   ]
+  },
+  {
+   "fdcId": 2708329,
+   "description": "Waffle, whole grain",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 9.23
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 38.61
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 364
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 3.8
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 473
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 295
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 847
+    }
+   ]
+  },
+  {
+   "fdcId": 170883,
+   "description": "Milk shakes, thick chocolate",
+   "dataType": "SR Legacy",
+   "publishedDate": "2019-04-01",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 3.05
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 0.3
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 126
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 111
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 224
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 21.2
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 119
+    }
+   ]
+  },
+  {
+   "fdcId": 170884,
+   "description": "Milk shakes, thick vanilla",
+   "dataType": "SR Legacy",
+   "publishedDate": "2019-04-01",
+   "foodNutrients": [
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 183
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 17.8
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 112
+    },
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 3.86
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 0
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 115
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 95
+    }
+   ]
+  },
+  {
+   "fdcId": 2708675,
+   "description": "Pizza, no cheese, thick crust",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 7.58
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 38.28
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 293
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 1.9
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 78
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 171
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 514
+    }
+   ]
+  },
+  {
+   "fdcId": 174526,
+   "description": "Sauce, homemade, white, thick",
+   "dataType": "SR Legacy",
+   "publishedDate": "2019-04-01",
+   "foodNutrients": [
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 11.6
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 186
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 149
+    },
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 3.99
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 0.3
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 96
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 373
+    }
+   ]
+  },
+  {
+   "fdcId": 2708314,
+   "description": "Waffle, plain, reduced fat",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 9.72
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 46.75
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 292
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 1.5
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 152
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 201
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 505
+    }
+   ]
+  },
+  {
+   "fdcId": 2708317,
+   "description": "Waffle, whole grain, frozen",
+   "dataType": "Survey (FNDDS)",
+   "publishedDate": "2024-10-31",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 6.78
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 46.7
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 289
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 4.1
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 272
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 156
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 529
+    }
+   ]
+  },
+  {
+   "fdcId": 2626748,
+   "description": "BLUEBERRY THICK AND FLUFFY POWER WAFFLES, BLUEBERRY",
+   "dataType": "Branded",
+   "gtinUpc": "705599014826",
+   "publishedDate": "2023-08-31",
+   "modifiedDate": "2023-07-31",
+   "brandOwner": "Baker Mills",
+   "brandName": "KODIAK",
+   "servingSize": 70,
+   "servingSizeUnit": "GRM",
+   "householdServingFullText": "1 waffle",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 14.3
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 32.9
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 329
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 4.3
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 171
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 329
+    }
+   ]
+  },
+  {
+   "fdcId": 2615402,
+   "description": "THICK & FLUFFY ORIGINAL WHOLE GRAIN WAFFLES",
+   "dataType": "Branded",
+   "gtinUpc": "0038000249082",
+   "publishedDate": "2023-08-31",
+   "modifiedDate": "2023-07-10",
+   "brandOwner": "The Kellogg Company ",
+   "brandName": "EGGO",
+   "servingSize": 55,
+   "servingSizeUnit": "GRM",
+   "householdServingFullText": "1 Waffle (55g)",
+   "foodNutrients": [
+    {
+     "nutrientId": 1003,
+     "nutrientName": "Protein",
+     "unitName": "G",
+     "value": 5.45
+    },
+    {
+     "nutrientId": 1005,
+     "nutrientName": "Carbohydrate, by difference",
+     "unitName": "G",
+     "value": 40
+    },
+    {
+     "nutrientId": 1008,
+     "nutrientName": "Energy",
+     "unitName": "KCAL",
+     "value": 218
+    },
+    {
+     "nutrientId": 1079,
+     "nutrientName": "Fiber, total dietary",
+     "unitName": "G",
+     "value": 5.5
+    },
+    {
+     "nutrientId": 1091,
+     "nutrientName": "Phosphorus, P",
+     "unitName": "MG",
+     "value": 182
+    },
+    {
+     "nutrientId": 1092,
+     "nutrientName": "Potassium, K",
+     "unitName": "MG",
+     "value": 145
+    },
+    {
+     "nutrientId": 1093,
+     "nutrientName": "Sodium, Na",
+     "unitName": "MG",
+     "value": 436
+    }
+   ]
+  }
+ ]
+}

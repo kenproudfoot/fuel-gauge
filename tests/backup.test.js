@@ -157,3 +157,14 @@ test('backup nudge after the configured number of days', () => {
   assert.equal(due({ lastBackupAt: now - 1 * DAY, firstEntryAt: now - 50 * DAY }), false);
   assert.equal(due({ lastBackupAt: now - 30 * DAY, nudgeDays: 0 }), false, '0 turns the reminder off');
 });
+
+test('entry sources survive a backup, including log-once entries', () => {
+  const all = ['me', 'ai-confirmed', 'usda-confirmed', 'ai', 'usda'].map((source, i) => entry(`s${i}`, '2026-11-11', { source }));
+  const back = parseEntriesCsv(entriesToCsv(all)).entries;
+  assert.deepEqual(back.map((e) => e.source), ['me', 'ai-confirmed', 'usda-confirmed', 'ai', 'usda']);
+  assert.equal(parseEntriesCsv(entriesToCsv([entry('x', '2026-11-11', { source: 'something-else' })])).entries[0].source, 'me');
+});
+
+test('the USDA key is stripped from exported settings', () => {
+  assert.deepEqual(exportableSettings({ usda: { apiKey: 'SECRET' }, ai: { apiKey: 'SECRET', model: 'm' } }), { usda: {}, ai: { model: 'm' } });
+});

@@ -5,6 +5,7 @@ import { NUTRIENTS, DEFAULT_SETTINGS, mergeSettings } from '../nutrients.js';
 import { APP_VERSION } from '../version.js';
 import { createBackupCard } from './backupUi.js';
 import { createAiCard } from './aiSettings.js';
+import { createUsdaCard } from './usdaSettings.js';
 
 export function createSettingsView(context) {
   const { getSettings, saveSettings, storageInfo } = context;
@@ -70,8 +71,8 @@ export function createSettingsView(context) {
     const save = async (e) => {
       e.preventDefault();
       const errors = [];
-      // Start from what is stored now, so a key saved on the AI card since this form was drawn is kept.
-      const next = mergeSettings({ ...settings, ai: getSettings().ai });
+      // Start from what is stored now, so a key saved on the AI or USDA card since this form was drawn is kept.
+      const next = mergeSettings({ ...settings, ai: getSettings().ai, usda: getSettings().usda });
       for (const n of NUTRIENTS) {
         const value = parseNumber(targetInputs[n.key].value);
         if (!(value > 0)) errors.push(`${n.name} target must be more than 0.`);
@@ -152,6 +153,8 @@ export function createSettingsView(context) {
           onclick: async () => {
             const next = mergeSettings({
               ...settings,
+              ai: getSettings().ai,
+              usda: getSettings().usda,
               targets: { ...DEFAULT_SETTINGS.targets },
               colors: { ...DEFAULT_SETTINGS.colors },
               proteinMin: null,
@@ -162,6 +165,7 @@ export function createSettingsView(context) {
           },
         }),
       ),
+      createUsdaCard(context),
       createAiCard(context),
       createBackupCard(context),
       el(
