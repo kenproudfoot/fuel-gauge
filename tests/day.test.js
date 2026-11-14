@@ -87,3 +87,37 @@ test('addDays steps across month ends', () => {
 test('formatDayKey is readable', () => {
   assert.equal(formatDayKey('2026-11-13', 'en-US'), 'Fri, Nov 13');
 });
+
+import { timeOfDay, timestampInFoodDay } from '../docs/js/day.js';
+
+test('timeOfDay gives HH:MM in local time', () => {
+  assert.equal(timeOfDay(local(2026, 11, 13, 7, 5)), '07:05');
+  assert.equal(timeOfDay(local(2026, 11, 13, 21, 40).getTime()), '21:40');
+});
+
+test('a morning time lands on the food day itself', () => {
+  assert.equal(timestampInFoodDay('2026-11-13', '07:30'), local(2026, 11, 13, 7, 30).getTime());
+  assert.equal(timestampInFoodDay('2026-11-13', '02:00'), local(2026, 11, 13, 2, 0).getTime());
+  assert.equal(timestampInFoodDay('2026-11-13', '23:59'), local(2026, 11, 13, 23, 59).getTime());
+});
+
+test('a time before 2 AM lands on the next calendar morning, still in the same food day', () => {
+  const ts = timestampInFoodDay('2026-11-13', '01:30');
+  assert.equal(ts, local(2026, 11, 14, 1, 30).getTime());
+  assert.equal(foodDayKey(ts), '2026-11-13');
+});
+
+test('every time of day maps back into its food day, including DST days', () => {
+  for (const day of ['2026-11-13', '2026-03-07', '2026-03-08', '2026-10-31', '2026-11-01', '2026-12-31']) {
+    for (let h = 0; h < 24; h++) {
+      const ts = timestampInFoodDay(day, `${String(h).padStart(2, '0')}:15`);
+      assert.equal(foodDayKey(ts), day, `${day} ${h}:15`);
+    }
+  }
+});
+
+test('unreadable times return null', () => {
+  for (const bad of ['', null, undefined, 'noon', '25:00', '12:75']) {
+    assert.equal(timestampInFoodDay('2026-11-13', bad), null);
+  }
+});

@@ -204,3 +204,24 @@ test('validateFood requires a name and a positive serving', () => {
   assert.equal(ok, false);
   assert.equal(errors.length, 2);
 });
+
+import { scaleNutrients, lastLoggedEntry } from '../docs/js/nutrients.js';
+
+test('scaleNutrients rescales an entry from its own stored values', () => {
+  const stored = scaleFood(pecans, 1);
+  assert.deepEqual(scaleNutrients(stored, 2), scaleFood(pecans, 2));
+  assert.deepEqual(scaleNutrients(stored, 1), stored);
+  assert.equal(scaleNutrients({ ...stored, effective_carbs_g: null }, 3).effective_carbs_g, null);
+});
+
+test('last entry is the most recently logged, not the latest eaten', () => {
+  const entries = [
+    { id: 'dinner', ts: 2000, createdAt: 2000 },
+    { id: 'breakfast-logged-late', ts: 1000, createdAt: 3000 },
+    { id: 'deleted', ts: 5000, createdAt: 5000, deleted: true },
+    { id: 'old-format', ts: 1500 },
+  ];
+  assert.equal(lastLoggedEntry(entries).id, 'breakfast-logged-late');
+  assert.equal(lastLoggedEntry([]), null);
+  assert.equal(lastLoggedEntry([{ id: 'x', ts: 1, deleted: true }]), null);
+});

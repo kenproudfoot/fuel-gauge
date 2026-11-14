@@ -24,7 +24,7 @@ Then open <http://localhost:8080> in a browser. To put it on a phone, see
 Built in phases.
 
 - [x] **1. Scaffold**: storage, settings (targets and colors), my foods, manual logging, tests
-- [ ] **2. Chart**: the five-bar SVG chart, entry editing and undo, offline PWA
+- [x] **2. Chart**: the five-bar SVG chart, entry editing and undo, offline PWA
 - [ ] **3. Voice and parser**: speech and text input, fuzzy food matching, foods-file import/export
 - [ ] **4. AI lookup**: nutrition lookup for unknown foods, with confirm-before-save
 - [ ] **5. Days and backup**: 2 AM rollover snapshots, history, zip backup and restore
@@ -35,10 +35,13 @@ Built in phases.
 ```
 docs/               the app, served as-is by GitHub Pages (no build step)
   index.html
+  sw.js             service worker: offline app shell, versioned updates
+  manifest.webmanifest, icons/
   css/app.css
   js/
     app.js          app shell and tab bar
     store.js        the only module that touches IndexedDB
+    chart.js        pure: renderChartSVG(totals, targets, colors) -> SVG string
     nutrients.js    pure: nutrient definitions, targets, scaling, totals
     units.js        pure: unit names and conversions
     day.js          pure: the 2 AM food-day boundary

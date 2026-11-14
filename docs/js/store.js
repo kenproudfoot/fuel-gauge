@@ -81,6 +81,9 @@ export const store = {
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   },
 
+  /** One food by id, even if it has been soft-deleted. Undefined when missing. */
+  getFood: (id) => (id ? run('foods', 'readonly', (s) => s.get(id)) : Promise.resolve(undefined)),
+
   /** Insert or update a food. Assigns id and timestamps. */
   async putFood(food) {
     const now = Date.now();
@@ -110,5 +113,10 @@ export const store = {
   /** Soft delete: the entry stays stored and is excluded from totals. */
   async deleteEntry(entry) {
     return store.putEntry({ ...entry, deleted: true, deletedAt: Date.now() });
+  },
+
+  /** Bring a soft-deleted entry back. */
+  async restoreEntry(entry) {
+    return store.putEntry({ ...entry, deleted: false, deletedAt: null });
   },
 };

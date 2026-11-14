@@ -36,6 +36,7 @@ export function createSettingsView({ getSettings, saveSettings, storageInfo }) {
       value: settings.proteinMin == null ? '' : String(settings.proteinMin),
       placeholder: 'not set',
     });
+    const mealLabels = el('input', { type: 'checkbox', checked: settings.showMealLabels !== false });
     const errorBox = el('div', { class: 'notice', hidden: true });
 
     const save = async (e) => {
@@ -48,6 +49,7 @@ export function createSettingsView({ getSettings, saveSettings, storageInfo }) {
         next.targets[n.key] = value;
         next.colors[n.key] = colorInputs[n.key].value;
       }
+      next.showMealLabels = mealLabels.checked;
       if (proteinMin.value.trim() === '') {
         next.proteinMin = null;
       } else {
@@ -94,6 +96,7 @@ export function createSettingsView({ getSettings, saveSettings, storageInfo }) {
           el('span', { class: 'field-label', text: 'Protein minimum (g), optional' }),
           proteinMin,
         ),
+        el('label', { class: 'check' }, mealLabels, el('span', { text: 'Show B / L / D labels on the chart' })),
         errorBox,
         el('button', { class: 'btn primary', type: 'submit', text: 'Save settings' }),
         el('button', {

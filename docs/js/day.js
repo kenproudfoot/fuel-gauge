@@ -47,3 +47,24 @@ export function formatDayKey(dayKey, locale) {
     day: 'numeric',
   });
 }
+
+/** Local wall-clock time of a moment as "HH:MM" (the format of <input type="time">). */
+export function timeOfDay(when) {
+  const d = when instanceof Date ? when : new Date(when);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/**
+ * The moment "HH:MM" falls on within a food day, as a timestamp.
+ * Times before the rollover hour belong to the tail of the food day, i.e. the
+ * next calendar morning. Returns null for unreadable input.
+ */
+export function timestampInFoodDay(dayKey, hhmm, rolloverHour = ROLLOVER_HOUR) {
+  const match = /^(\d{1,2}):(\d{2})/.exec(String(hhmm ?? ''));
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+  const [y, m, d] = dayKey.split('-').map(Number);
+  return new Date(y, m - 1, d + (hours < rolloverHour ? 1 : 0), hours, minutes).getTime();
+}

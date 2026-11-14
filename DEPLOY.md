@@ -74,22 +74,31 @@ Removing the app from the Home Screen deletes its data. Once backup lands
 
 ## 5. How updates reach the phone
 
-Every push to `main` redeploys the site.
+A service worker (`docs/sw.js`) keeps a copy of the whole app on the phone, so
+it opens and logs with no signal. That copy is tied to a version number.
 
-**Today (phase 1):** there is no service worker yet, so the phone simply
-re-downloads files. GitHub Pages lets browsers cache files for about 10
-minutes, so an update can take that long to show. Close and reopen the app to
-pick it up. **Settings → About** shows the version number, which is set in
-`docs/js/version.js`; bump it with each release so you can confirm what the
-phone is running.
+To release a change:
 
-**From phase 2:** a service worker caches the app so it works offline. Its
-cache name includes the version, so bumping the version makes the phone fetch
-the new files in the background.
+1. Bump the version in **three** places to the same value: `docs/js/version.js`,
+   `VERSION` in `docs/sw.js`, and `version` in `package.json`.
+2. If you added or removed a file under `docs/`, update the `ASSETS` list in
+   `docs/sw.js`.
+3. Run `npm test`. It fails if the versions disagree or `ASSETS` does not match
+   the files in `docs/`.
+4. Commit and push.
 
-**From phase 5:** when a new version has been downloaded, the app shows an
+On the phone, the next time the app is opened or brought to the front it checks
+for a new version, downloads it in the background, and shows an
 **"Update available, tap to reload"** banner. Nothing changes under you until
-you tap it.
+you tap it. **Settings → About** shows the version that is running.
+
+If you push without bumping the version, phones keep running the old copy.
+
+GitHub Pages lets browsers cache `sw.js` for about 10 minutes, so a new release
+can take that long to be noticed.
 
 Updates never touch your data: foods, entries and settings stay in IndexedDB
 across versions.
+
+On the Mac, the service worker is off at `localhost` so edits show on reload.
+Add `?sw=1` to the URL to test offline behavior locally.

@@ -173,3 +173,25 @@ export function validateFood(raw) {
 
   return { ok: errors.length === 0, food, errors };
 }
+
+/** Multiply an entry's stored nutrient values by a factor (unknown carbs stay unknown). */
+export function scaleNutrients(nutrients, factor) {
+  const out = {};
+  for (const key of NUTRIENT_KEYS) out[key] = round2((Number(nutrients[key]) || 0) * factor);
+  out.effective_carbs_g =
+    nutrients.effective_carbs_g == null ? null : round2(Number(nutrients.effective_carbs_g) * factor);
+  return out;
+}
+
+/**
+ * The entry that was logged most recently, whatever time of day it was eaten.
+ * This is the one the "Last entry" carbs figure reports.
+ */
+export function lastLoggedEntry(entries) {
+  let last = null;
+  for (const entry of entries) {
+    if (entry.deleted) continue;
+    if (!last || (entry.createdAt ?? entry.ts) > (last.createdAt ?? last.ts)) last = entry;
+  }
+  return last;
+}

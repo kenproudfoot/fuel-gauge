@@ -74,4 +74,52 @@ async function boot() {
   await goTo('today');
 }
 
+/**
+ * Offline support and updates. A new version downloads in the background and
+ * waits; nothing changes until the banner is tapped.
+ */
+async function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  // Skipped on a dev machine so edits show up on reload; add ?sw=1 to test it locally.
+  const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+  if (local && !new URLSearchParams(location.search).has('sw')) return;
+
+  const banner = document.getElementById('update-banner');
+  try {
+    const registration = await navigator.serviceWorker.register('sw.js');
+    const offer = (worker) => {
+      // No controller means this is the first install, not an update.
+      if (!worker || !navigator.serviceWorker.controller) return;
+      banner.hidden = false;
+      banner.onclick = () => {
+        banner.disabled = true;
+        worker.postMessage('SKIP_WAITING');
+      };
+    };
+    offer(registration.waiting);
+    registration.addEventListener('updatefound', () => {
+      const worker = registration.installing;
+      worker?.addEventListener('statechange', () => {
+        if (worker.state === 'installed') offer(worker);
+      });
+    });
+
+    let reloading = false;
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloading) return;
+      reloading = true;
+      location.reload();
+    });
+
+    // A Home Screen app can stay open for days; look for updates whenever it comes back.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') registration.update().catch(() => {});
+    });
+  } catch {
+    // Offline support is a bonus; the app still works without it.
+  }
+}
+
 boot();
+registerServiceWorker();

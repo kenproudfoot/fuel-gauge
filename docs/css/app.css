@@ -62,21 +62,9 @@ p { margin: 0 0 10px; }
 .card > h2 { margin-bottom: 2px; }
 .card > p { margin: 0; }
 
-/* Totals (replaced by the chart in phase 2) */
-.totals {
-  background: var(--panel);
-  border-radius: 14px;
-  padding: 12px 16px;
-  margin-bottom: 12px;
-}
-.total-row { display: flex; align-items: center; gap: 12px; padding: 7px 0; }
-.total-letter { width: 22px; font-size: 24px; font-weight: 200; text-align: center; }
-.total-main { flex: 1; min-width: 0; }
-.total-text { display: flex; justify-content: space-between; align-items: baseline; }
-.total-value { font-weight: 700; }
-.total-target { font-size: 14px; color: var(--muted); }
-.meter { height: 10px; border-radius: 5px; background: #121215; overflow: hidden; margin-top: 4px; }
-.meter-fill { height: 100%; border-radius: 5px; min-width: 0; }
+/* The chart: a square SVG, full width */
+.chart { margin: 0 0 12px; border-radius: 6px; overflow: hidden; background: #000; aspect-ratio: 1; }
+.chart svg { display: block; width: 100%; height: 100%; }
 
 .carbs-line { font-size: 16px; padding: 0 2px; margin-bottom: 14px; }
 .carbs-last { font-size: 30px; font-weight: 700; }
@@ -169,19 +157,29 @@ select.big-input {
 .food-name { font-weight: 600; overflow-wrap: anywhere; }
 .food-pick .muted { font-size: 14px; white-space: nowrap; }
 
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card-head h2 { margin: 0; }
+
+/* Press-and-hold rows: no text selection or iOS callout while holding */
 .entry {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
+  padding: 12px 8px;
+  margin: 0 -8px;
   border-top: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: pan-y;
+  transition: background-color 0.4s ease-out;
 }
-.entry-main { flex: 1; min-width: 0; }
+.entry.pressing { background: var(--panel-2); }
+.entry:focus-visible { outline: 2px solid var(--text); }
 .entry-title { font-weight: 600; overflow-wrap: anywhere; }
 .entry-title .muted { font-weight: 400; }
 .entry-nutrients { font-size: 13px; }
 
-/* Bottom sheet for logging */
+/* Sheet for logging and editing */
 .backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 20; }
 .sheet {
   /* Anchored to the top so the iOS keyboard can never cover it. */
@@ -233,10 +231,50 @@ select.big-input {
   z-index: 30;
   max-width: 532px;
   margin: 0 auto;
-  padding: 14px 16px;
+  padding: 8px 8px 8px 16px;
+  min-height: 56px;
   background: var(--text);
   color: #121215;
   border-radius: 12px;
   font-weight: 600;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
+.toast-text { overflow-wrap: anywhere; }
+.toast-action {
+  flex: none;
+  min-height: 44px;
+  padding: 6px 18px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+  background: #121215;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+/* "Update available" banner: neutral, never red */
+#update-banner {
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom) + 12px);
+  z-index: 15;
+  max-width: 532px;
+  margin: 0 auto;
+  min-height: 52px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 700;
+  color: #121215;
+  background: var(--text);
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+input[type="time"].big-input { display: block; text-align: left; }
+input[type="time"]::-webkit-date-and-time-value { text-align: left; }
