@@ -45,6 +45,8 @@ export function createTodayView(context) {
 
   // Fixed skeleton, so re-rendering never takes focus away from the text field.
   const trendButton = el('button', { class: 'trend', type: 'button', 'aria-label': 'Trend' });
+  // Header band: app icon on the left, the trend indicator on the right.
+  const header = el('header', { class: 'app-header' }, el('img', { class: 'app-logo', src: 'icons/icon.svg', alt: 'Fuel Gauge' }), trendButton);
   const statusRow = el('div', { class: 'status-row' });
   const nudgeBox = el('div');
   const chartBox = el('div', { class: 'chart' });
@@ -92,7 +94,7 @@ export function createTodayView(context) {
   const root = el(
     'section',
     { class: 'view' },
-    trendButton,
+    header,
     statusRow,
     nudgeBox,
     chartBox,
@@ -145,7 +147,7 @@ export function createTodayView(context) {
     icon.innerHTML = trendIconSVG(trend.state); // fixed shapes and colors from trend.js
     const text = el('span', { class: 'trend-text', text: trend.label });
     if (trend.state !== 'grey') text.style.color = TREND_COLORS[trend.state]; // red only when a limit is over
-    trendButton.replaceChildren(icon, text);
+    trendButton.replaceChildren(text, icon);
     trendButton.setAttribute('aria-label', `Trend: ${trend.label}. Tap for details.`);
   }
   trendButton.addEventListener('click', () => showTrendCard());

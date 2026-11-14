@@ -321,13 +321,27 @@ a.muted { text-decoration: underline; padding: 8px 0; }
 
 /* Status row: backup age on the right, tappable */
 .status-row { align-items: center; }
-/* Trend indicator: icon + words, the whole row is the tap target */
+/* Today header: a lighter band, full width and under the status bar */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: calc(-1 * (env(safe-area-inset-top) + 10px)) -14px 10px;
+  padding: calc(env(safe-area-inset-top) + 8px) 14px 8px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.app-logo { width: 34px; height: 34px; flex: none; border-radius: 8px; box-shadow: 0 0 0 1px var(--line); }
+
+/* Trend indicator: words then icon, the whole thing is the tap target */
 .trend {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
-  width: 100%;
-  min-height: 40px;
+  min-width: 0;
+  min-height: 44px;
   padding: 4px 2px;
   font: inherit;
   font-size: 16px;
@@ -338,6 +352,7 @@ a.muted { text-decoration: underline; padding: 8px 0; }
   text-align: left;
   cursor: pointer;
 }
+.trend-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .trend-icon { display: inline-grid; place-items: center; flex: none; }
 .card-head h2 .trend-icon { vertical-align: -2px; }
 .trend-reasons { margin: 8px 0; padding-left: 20px; }
