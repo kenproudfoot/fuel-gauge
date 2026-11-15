@@ -9,6 +9,60 @@ on the device in IndexedDB.
 
 Fuel Gauge only reports what was eaten. It never suggests insulin doses.
 
+**Try it:** <https://kenproudfoot.github.io/fuel-gauge/>. In Safari on an
+iPhone, tap Share → Add to Home Screen. It works offline after the first load.
+
+## A quick tour
+
+The screenshots use made-up demo data.
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="screenshots/today.png" alt="Today screen: the five-bar chart, the trend indicator reading On pace, and the day's entries"></td>
+<td width="33%" valign="top"><img src="screenshots/trend-details.png" alt="Trend details card explaining the calorie pace and the 5-day average"></td>
+<td width="33%" valign="top"><img src="screenshots/limit-over.png" alt="Sodium over its limit: the sodium bar and the trend indicator turn red"></td>
+</tr>
+<tr>
+<td valign="top"><b>Today.</b> One bar each for calories (C), protein (P), sodium (S), potassium (K) and phosphorus (H), filled against the day's targets. Effective carbs are shown in large type for the last entry, with the day's total beside them. Type or dictate what you ate, or photograph a label.</td>
+<td valign="top"><b>Trend indicator.</b> Top right: on pace (green up arrow), behind or close to a limit (yellow dash), or a limit over (red down arrow). Tap it for the reasons, the calorie pace and the weekly average.</td>
+<td valign="top"><b>Red means danger.</b> Red appears only when a limit is exceeded: the bar, its label and the indicator. Nothing else in the app is red.</td>
+</tr>
+<tr>
+<td valign="top"><img src="screenshots/usda-matches.png" alt="USDA matches list for eggo thick and fluffy waffles"></td>
+<td valign="top"><img src="screenshots/usda-confirm.png" alt="Confirm card with values tagged USDA and a link to the USDA record"></td>
+<td valign="top"><img src="screenshots/label-confirm.png" alt="Label photo confirm card: the photo above values tagged label, phosphorus filled in from USDA"></td>
+</tr>
+<tr>
+<td valign="top"><b>USDA lookup.</b> A food the app doesn't know yet is searched in USDA FoodData Central. Pick the matching product.</td>
+<td valign="top"><b>Check before saving.</b> Every value shows where it came from, and the card links to the USDA record and gives its date. Nothing is logged until you choose.</td>
+<td valign="top"><b>Label photo.</b> Photograph a Nutrition Facts label and the printed values are read in. Anything the label leaves out, such as phosphorus, is filled in from USDA.</td>
+</tr>
+<tr>
+<td valign="top"><img src="screenshots/history.png" alt="History list of past days with small charts and any limits exceeded"></td>
+<td valign="top"><img src="screenshots/history-day.png" alt="A past day's chart and entries"></td>
+<td valign="top"><img src="screenshots/foods.png" alt="My foods list with import and export"></td>
+</tr>
+<tr>
+<td valign="top"><b>History.</b> Each day is filed at 2 AM with its final chart, any limits it went over, and the weekly calorie average.</td>
+<td valign="top"><b>A past day.</b> The chart and every entry, with buttons to save the chart image or share a text log.</td>
+<td valign="top"><b>My foods.</b> Saved foods log instantly, with no network needed. The list imports and exports as a plain-text file.</td>
+</tr>
+</table>
+
+### Features at a glance
+
+- **Voice-first logging**: `2 slices toast`, `half a banana`, `undo`, `what's left?`
+- **Five-nutrient chart**: calories as a goal; protein, sodium, potassium and phosphorus as limits; colours are configurable
+- **Effective carbs**: total carbs minus fiber, reported but never turned into a dose
+- **USDA FoodData Central lookup**, with the source linked
+- **AI lookup** through OpenAI, Gemini, Claude or any OpenAI-compatible API; AI values are tagged *estimated* until you confirm them
+- **Label photo reading**, with gaps filled from USDA
+- **Trend indicator** paced over an eating window, plus a 7-day calorie average
+- **Phosphate-additive flag** and per-entry "High P" badges
+- **History**, with a chart image and text log for each day
+- **Zip backup and restore**, and a plain-text foods file for editing on a computer
+- **Runs on the phone itself**: offline PWA, no server, no account; data stays in the phone's storage
+
 ## Quick start
 
 ```sh
@@ -57,6 +111,8 @@ docs/               the app, served as-is by GitHub Pages (no build step)
     ui/             screens (Today, History, Foods, Settings), files, backup
   vendor/           third-party code copied in (JSZip); see vendor/README.md
 tests/              node --test unit tests for the pure modules
+screenshots/        README images (demo data)
+tools/              readme-shots.mjs: retakes the screenshots in headless Chrome
 ```
 
 ## Logging
