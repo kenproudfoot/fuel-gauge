@@ -122,11 +122,37 @@ const fx = (n) => readFileSync(path.join(process.env.FIXTURES, n), 'utf8');
 await evaluate(`
   const SEARCH = ${fx('fdc-search.json')}; const OLD = ${fx('fdc-branded-old.json')}; const NEW = ${fx('fdc-branded.json')};
   const real = window.fetch.bind(window);
+  const block = (v) => '\\n\\n\u0060\u0060\u0060values\\n' + JSON.stringify(v) + '\\n\u0060\u0060\u0060';
+  const SANDWICH = [
+    'Here is how that sandwich adds up:',
+    '- **Rye bread**, 2 slices (64 g): 166 kcal, P 5.4 g, S 386 mg, K 106 mg, H 80 mg, 27 g carbs after fiber',
+    '- **Deli turkey**, 2 oz: 60 kcal, P 10 g, S 560 mg, K 140 mg, H 140 mg. Deli meats usually contain phosphate additives',
+    '- **Swiss cheese**, 1 slice (28 g): 106 kcal, P 7.6 g, S 54 mg, K 22 mg, H 160 mg',
+    '- **Yellow mustard**, 1 tsp: 3 kcal, S 57 mg',
+    '',
+    'Totals are from USDA FoodData Central entries for each part. Sodium depends most on the turkey brand, so check its label if you have it.',
+  ].join('\\n') + block({ name: 'Turkey & swiss on rye', amount: 1, unit: 'each', calories: 335, protein_g: 23, sodium_mg: 1057, potassium_mg: 275, phosphorus_mg: 384, total_carbs_g: 32.7, fiber_g: 3.9, phosphate_additives: true });
+  const CHEDDAR = [
+    'A 1 oz (28 g) slice of cheddar has about **129 mg phosphorus** (USDA FoodData Central, cheddar cheese).',
+    '- Swiss is higher, about 160 mg a slice',
+    '- Fresh mozzarella is lower, about 100 mg per ounce',
+    '- Processed American slices often have phosphate additives, which are absorbed more easily',
+    '',
+    'You have about 360 mg of phosphorus left today, so one slice fits.',
+  ].join('\\n') + block({ name: 'Cheddar cheese', amount: 1, unit: 'slice', calories: 113, protein_g: 7, sodium_mg: 180, potassium_mg: 27, phosphorus_mg: 129, total_carbs_g: 0.4, fiber_g: 0, phosphate_additives: false });
   const json = (data) => new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
   window.fetch = async (url, init = {}) => {
     const u = String(url);
     if (u.startsWith('https://api.nal.usda.gov/')) { const p = new URL(u); if (p.pathname.endsWith('/foods/search')) return json(SEARCH); return json(p.pathname.endsWith('/752908') ? OLD : NEW); }
     if (u.startsWith('https://api.openai.com/')) {
+      const body = JSON.parse(init.body || '{}');
+      // Chat replies: prose with a values block, the way the real prompt asks for them.
+      if (/assistant inside Fuel Gauge/.test(body.messages[0].content)) {
+        const last = JSON.stringify(body.messages.at(-1).content);
+        const reply = /cheddar/i.test(last) ? CHEDDAR : SANDWICH;
+        await new Promise((r) => setTimeout(r, 150));
+        return json({ choices: [{ message: { role: 'assistant', content: reply } }] });
+      }
       const reply = { name: 'Thick & Fluffy waffles', serving_amount: 1, serving_unit: 'each', grams_per_serving: 55, calories: 160, protein_g: 3, sodium_mg: 270, potassium_mg: 30, phosphorus_mg: null, total_carbs_g: 22, fiber_g: 0.5, ingredients_visible: true, phosphate_additives: true, notes: '' };
       return json({ choices: [{ message: { role: 'assistant', content: JSON.stringify(reply) } }] });
     }
@@ -164,6 +190,19 @@ await evaluate(`${helpers}
 await size(1500); await sleep(300); await evaluate(`${helpers} top('.confirm');`);
 await snap('label-confirm.png'); await size(844); await sleep(300);
 await evaluate(`${helpers} click('.confirm button', 'Cancel'); await wait(300);`);
+
+// 4b. More ways in: the photo choices, the AI chat in Quick entry, and Ask AI.
+await evaluate(`${helpers} hideToast(); const i = document.querySelector('.command-input'); i.value = ''; click('.mic[aria-label^="Read"]'); await wait(300); top('.command');`);
+await snap('photo-choices.png');
+await evaluate(`${helpers} click('.card button', 'Close'); click('.tool', 'Quick entry'); await wait(300); click('.confirm button', 'Describe it to AI'); await wait(200);
+  document.querySelector('.chat-box').value = 'turkey and swiss on rye with mustard'; click('.chat-panel button', 'Send'); await wait(800);
+  click('.chat-values button', 'Fill in'); await wait(600); hideToast();`);
+await size(1700); await sleep(300); await evaluate(`${helpers} top('.confirm');`);
+await snap('quick-chat.png'); await size(844); await sleep(300);
+await evaluate(`${helpers} click('.confirm button', 'Cancel'); await wait(200); click('.tool', 'Ask AI'); await wait(400);
+  document.querySelector('.chat-box').value = 'How much phosphorus is in a slice of cheddar?'; click('.chat-panel button', 'Send'); await wait(800); window.scrollTo(0, 0);`);
+await snap('ask-ai.png');
+await evaluate(`${helpers} click('button', '‹ Today'); await wait(400);`);
 
 // 5. A limit over: red.
 await evaluate(`${helpers} globalThis.__t = new Date(2026, 10, 14, 17, 30).getTime(); await cmd('2 cups canned soup', 900); hideToast(); window.scrollTo(0, 0);`); await snap('limit-over.png');

@@ -23,7 +23,7 @@ The screenshots use made-up demo data.
 <td width="33%" valign="top"><img src="screenshots/limit-over.png" alt="Sodium over its limit: the sodium bar and the trend indicator turn red"></td>
 </tr>
 <tr>
-<td valign="top"><b>Today.</b> One bar each for calories (C), protein (P), sodium (S), potassium (K) and phosphorus (H), filled against the day's targets. Effective carbs are shown in large type for the last entry, with the day's total beside them. Type or dictate what you ate, or photograph a label.</td>
+<td valign="top"><b>Today.</b> One bar each for calories (C), protein (P), sodium (S), potassium (K) and phosphorus (H), filled against the day's targets. Below it, a card with the day's effective carbs and the last entry's. Type or dictate what you ate, photograph a label, add a Quick entry, or ask the AI.</td>
 <td valign="top"><b>Trend indicator.</b> Top right: on pace (green up arrow), behind or close to a limit (yellow dash), or a limit over (red down arrow). Tap it for the reasons, the calorie pace and the weekly average.</td>
 <td valign="top"><b>Red means danger.</b> Red appears only when a limit is exceeded: the bar, its label and the indicator. Nothing else in the app is red.</td>
 </tr>
@@ -36,6 +36,16 @@ The screenshots use made-up demo data.
 <td valign="top"><b>USDA lookup.</b> A food the app doesn't know yet is searched in USDA FoodData Central. Pick the matching product.</td>
 <td valign="top"><b>Check before saving.</b> Every value shows where it came from, and the card links to the USDA record and gives its date. Nothing is logged until you choose.</td>
 <td valign="top"><b>Label photo.</b> Photograph a Nutrition Facts label and the printed values are read in. Anything the label leaves out, such as phosphorus, is filled in from USDA.</td>
+</tr>
+<tr>
+<td valign="top"><img src="screenshots/photo-choices.png" alt="Label photo choices: take a photo, choose a photo, or paste an image"></td>
+<td valign="top"><img src="screenshots/quick-chat.png" alt="Quick entry filled in from an AI chat that broke a turkey and swiss sandwich into its parts"></td>
+<td valign="top"><img src="screenshots/ask-ai.png" alt="Ask AI screen answering how much phosphorus is in a slice of cheddar, with a Log this button"></td>
+</tr>
+<tr>
+<td valign="top"><b>Any picture.</b> Take a photo, pick one from the library, or paste one. A picture that isn't a label can be estimated with the AI instead.</td>
+<td valign="top"><b>Talk it through.</b> Tell the AI what was in it. It shows each part's numbers and why, and one tap fills in the fields to check before logging. Works on any lookup and in Quick entry.</td>
+<td valign="top"><b>Ask AI.</b> A chat that logs nothing: look a food up, compare two, or ask whether it fits today. An answer with numbers can be sent to Quick entry.</td>
 </tr>
 <tr>
 <td valign="top"><img src="screenshots/history.png" alt="History list of past days with small charts and any limits exceeded"></td>
