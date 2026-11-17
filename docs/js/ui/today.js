@@ -278,24 +278,27 @@ export function createTodayView(context) {
     chartBox.innerHTML = renderChartSVG(totals, settings.targets, settings.colors, {
       showMealLabels: settings.showMealLabels,
     });
-    carbsBox.replaceChildren(
-      renderCarbsLine(totals, lastLoggedEntry(entries)),
-      el('button', { class: 'status-link save-image', type: 'button', text: 'Save chart image', onclick: (e) => saveChartImage(e.currentTarget) }),
-    );
+    carbsBox.replaceChildren(renderCarbsCard(totals, lastLoggedEntry(entries)));
     entriesBox.replaceChildren(renderEntries(live));
     renderTrend();
   }
 
-  function renderCarbsLine(totals, lastEntry) {
-    const line = el('p', { class: 'carbs-line' }, `Carbs today: ${formatCarbTotal(totals)}`);
-    if (lastEntry) {
-      line.append(
-        ' · Last entry: ',
-        el('span', { class: 'carbs-last', text: formatCarbs(lastEntry.nutrients.effective_carbs_g) }),
-        ` (${lastEntry.foodName})`,
+  /** Carbs today and for the last entry, with the chart-image link, in one card. */
+  function renderCarbsCard(totals, lastEntry) {
+    const row = (label, value, detail) =>
+      el(
+        'div',
+        { class: 'carbs-row' },
+        el('div', { class: 'carbs-label' }, el('span', { text: label }), detail && el('span', { class: 'carbs-food muted', text: detail })),
+        el('strong', { class: 'carbs-value', text: value }),
       );
-    }
-    return line;
+    return el(
+      'div',
+      { class: 'card carbs-card' },
+      row('Carbs today', formatCarbTotal(totals)),
+      lastEntry && row('Last entry', formatCarbs(lastEntry.nutrients.effective_carbs_g), lastEntry.foodName),
+      el('button', { class: 'status-link save-image', type: 'button', text: 'Save chart image', onclick: (e) => saveChartImage(e.currentTarget) }),
+    );
   }
 
   // --- command pipeline ---------------------------------------------------

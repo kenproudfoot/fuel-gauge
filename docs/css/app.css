@@ -81,7 +81,6 @@ p { margin: 0 0 10px; }
 .chart svg { display: block; width: 100%; height: 100%; }
 
 .carbs-line { font-size: 16px; padding: 0 2px; margin-bottom: 14px; }
-.carbs-last { font-size: 30px; font-weight: 700; }
 
 /* Controls: big targets, 16px+ text so iOS never zooms the page */
 .big-input {
@@ -391,7 +390,16 @@ a.muted { text-decoration: underline; padding: 8px 0; }
   text-decoration: underline;
   cursor: pointer;
 }
-.save-image { display: block; margin: -8px 0 12px; padding: 8px 2px; }
+.save-image { align-self: flex-start; padding: 6px 0 0; }
+
+/* Today: carbs card under the chart */
+.carbs-card { gap: 0; padding-top: 6px; padding-bottom: 12px; }
+.carbs-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0; }
+.carbs-row + .carbs-row { border-top: 1px solid var(--line); }
+.carbs-label { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.carbs-food { font-size: 14px; overflow-wrap: anywhere; }
+.carbs-value { font-size: 17px; white-space: nowrap; }
+.carbs-card .save-image { border-top: 1px solid var(--line); width: 100%; text-align: left; padding-top: 10px; }
 
 /* Backup reminder: yellow, never red */
 .nudge {
