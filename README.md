@@ -56,7 +56,9 @@ The screenshots use made-up demo data.
 - **Effective carbs**: total carbs minus fiber, reported but never turned into a dose
 - **USDA FoodData Central lookup**, with the source linked
 - **AI lookup** through OpenAI, Gemini, Claude or any OpenAI-compatible API; AI values are tagged *estimated* until you confirm them
-- **Label photo reading**, with gaps filled from USDA
+- **Label photo reading** from the camera, the photo library or a pasted image, with gaps filled from USDA
+- **AI chat**: talk an entry through ("turkey and swiss on rye") and have the numbers filled in, or ask about a food without logging anything
+- **Quick entry** for a one-off meal: type the totals, or work them out with the AI
 - **Trend indicator** paced over an eating window, plus a 7-day calorie average
 - **Phosphate-additive flag** and per-entry "High P" badges
 - **History**, with a chart image and text log for each day
@@ -105,6 +107,7 @@ docs/               the app, served as-is by GitHub Pages (no build step)
     history.js      pure: a finished day's summary record and readable text log
     backup.js       pure: backup files (entries.csv, daily_summary.csv, ...) and restore planning
     ai.js           OpenAI-compatible client, prompts, reply validation (fetch is injectable)
+    chat.js         AI chat prompts and reading the values block from a reply
     usda.js         USDA FoodData Central search and record reading (fetch is injectable)
     units.js        pure: unit names and conversions
     day.js          pure: the 2 AM food-day boundary
@@ -123,7 +126,33 @@ Type or dictate into the field on the Today screen and press Return:
 - `undo`, `delete the pecans`, `what's left?`
 
 Known foods are logged instantly and never need the network. If several foods
-match, the app asks which one. Press and hold an entry to edit or delete it.
+match, the app asks which one, with **None of these** buttons that go on to USDA
+and then AI. A food not in the list is searched in the same order: my foods,
+then USDA (when a key is set), then AI. Press and hold an entry to edit or
+delete it.
+
+**Quick entry**, under the text field, is for a one-off meal: type the totals
+(blank counts as 0) and press **Log**, or **Log & save to my foods** to keep it.
+Entries typed this way have the source `me`.
+
+## AI chat
+
+Any AI answer on a confirm card opens with a chat under it (USDA and label cards
+have a **Refine with AI chat** button, and Quick entry has **Describe it to AI
+instead**). Tell it what was in the food, the brand or the size; it lists each
+component with its numbers, the totals, and why it chose them. **Fill in these
+values** puts the totals in the card's fields, tagged **estimated**, to check
+before logging. Nothing is logged from the chat itself.
+
+**Ask AI**, under the text field, opens a chat that logs nothing: ask about a
+food, compare two, or ask whether something fits in the day (the chat is told
+the day's totals and targets). An answer with values has a **Log this…** button
+that opens Quick entry with them filled in.
+
+The model ends a reply that has numbers with a fenced `values` JSON block,
+which the app reads and validates (`docs/js/chat.js`). Chats can include a
+photo, attached or pasted. They are not stored and are never in a backup. Like
+every other AI call, a reply that strays into insulin or dosing is replaced.
 
 ## USDA lookup
 
@@ -149,7 +178,11 @@ as the AI key.
 
 ## Label photo
 
-The camera button on Today photographs a Nutrition Facts label. The photo is
+The camera button on Today reads a Nutrition Facts label from a new photo, one
+chosen from the photo library (or a file on a Mac), or the clipboard. Pasting a
+picture into the text field, or ⌘V anywhere on Today, does the same. If the
+picture isn't a label (a plate of food, say), the app offers to estimate it from
+the photo in Quick entry with the AI chat. The photo is
 shrunk (which also drops its metadata), sent to the configured AI provider, and
 the model copies the printed values: it is told never to estimate, and to leave
 anything unprinted blank. The confirm card shows the photo above the values so
@@ -166,7 +199,8 @@ Foods that are not in the list can be looked up through any OpenAI-compatible
 Chat Completions API, called with `fetch` directly from the browser. Set the
 provider, API key and model under **Settings → AI lookup**. The key is stored
 only in the phone's IndexedDB; it is never logged and never written to a backup.
-Only the food text that was typed or dictated is sent to the provider.
+Only the food text that was typed or dictated is sent to the provider, plus,
+in a chat, the messages and photos you send and the day's nutrient totals.
 
 A lookup never logs anything by itself. It opens a confirm card with every
 value editable and tagged "estimated"; **Log & save to my foods** stores the

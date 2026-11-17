@@ -474,7 +474,11 @@ export async function readLabel(config, imageDataUrl, fallbackName = '', deps = 
       deps,
     );
   } catch (error) {
-    if (error.kind === 'format' && notLabel) throw new AiError('format', "That photo doesn't look like a nutrition label the AI could read. Try again closer, flat and in good light.");
+    if (error.kind === 'format' && notLabel) {
+      const notLabelError = new AiError('format', "That photo doesn't look like a nutrition label the AI could read. Try again closer, flat and in good light.");
+      notLabelError.notLabel = true; // the UI can offer to estimate from the picture instead
+      throw notLabelError;
+    }
     throw error;
   }
 }

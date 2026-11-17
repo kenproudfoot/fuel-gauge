@@ -77,7 +77,7 @@ export function createAiCard({ getSettings, saveSettings }) {
     el('h2', { text: 'AI lookup' }),
     el('p', {
       class: 'muted',
-      text: 'Looks up foods that are not in your list. Only the food text you enter is sent to the provider you choose. The key is kept on this phone only and is never put in a backup.',
+      text: 'Looks up foods that are not in your list, reads label photos, and powers the chat. Only what you enter (food text, photos, chat messages, and in a chat the day\'s totals) is sent to the provider you choose. The key is kept on this phone only and is never put in a backup.',
     }),
     el('label', { class: 'field' }, el('span', { class: 'field-label', text: 'Provider' }), preset),
     el('label', { class: 'field' }, el('span', { class: 'field-label', text: 'Base URL' }), baseUrl),

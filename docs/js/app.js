@@ -7,6 +7,7 @@ import { createTodayView } from './ui/today.js';
 import { createFoodsView } from './ui/foods.js';
 import { createSettingsView } from './ui/settings.js';
 import { createHistoryView } from './ui/history.js';
+import { createChatView } from './ui/chatView.js';
 import { finalizePastDays } from './ui/finalize.js';
 import { foodDayKey } from './day.js';
 
@@ -63,6 +64,7 @@ async function boot() {
     history: createHistoryView(context),
     foods: createFoodsView(context),
     settings: createSettingsView(context),
+    chat: createChatView(context), // opened from Today; no tab of its own
   };
 
   tabs.addEventListener('click', (event) => {

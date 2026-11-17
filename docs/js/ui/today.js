@@ -27,13 +27,19 @@ import { createVoice } from './voice.js';
 import { isConfigured, lookupFood, parseWithAi, gramsFor, readLabel } from '../ai.js';
 import { photoToDataUrl } from './files.js';
 import { computeTrend, weeklyCalories, weeklyLabel, trendIconSVG, formatClock, TREND_COLORS } from '../trend.js';
-import { createConfirmCard } from './confirmCard.js';
+import { createConfirmCard, blankLookup } from './confirmCard.js';
+import { createChatPanel, imageFromClipboard } from './chatPanel.js';
+import { refinePrompt } from '../chat.js';
 import { usdaConfigured, searchFoods, fetchFood, foodFromFdc, mergeEstimates, gramsFromPortions } from '../usda.js';
 
 const UNDO_MS = 10000;
 const CAMERA_ICON =
   '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13.5" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
 const PLACEHOLDER = '12 g candied pecans';
+const PLUS_ICON =
+  '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+export const CHAT_ICON =
+  '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-9l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
 const MIC_ICON =
   '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8.5 21h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
@@ -73,29 +79,25 @@ export function createTodayView(context) {
   });
   const micButton = el('button', { class: 'mic', type: 'button', 'aria-label': 'Speak' });
   micButton.innerHTML = MIC_ICON; // static markup defined above
-  // Label photo: the iPhone camera (or photo library) through a plain file input.
-  const photoInput = el('input', { class: 'visually-hidden', type: 'file', accept: 'image/*', tabIndex: -1, 'aria-hidden': 'true' });
-  photoInput.setAttribute('capture', 'environment');
-  photoInput.addEventListener('change', () => {
-    const file = photoInput.files?.[0];
-    photoInput.value = ''; // so the same photo can be chosen again
-    if (file) readLabelPhoto(file);
-  });
+  // Label photo: two plain file inputs, one that opens the camera and one that
+  // offers the photo library (or Files, or a Mac's file picker).
+  const photoInput = (capture) => {
+    const input = el('input', { class: 'visually-hidden', type: 'file', accept: 'image/*', tabIndex: -1, 'aria-hidden': 'true' });
+    if (capture) input.setAttribute('capture', 'environment');
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      input.value = ''; // so the same photo can be chosen again
+      if (file) readLabelPhoto(file);
+    });
+    return input;
+  };
+  const cameraInput = photoInput(true);
+  const libraryInput = photoInput(false);
   const cameraButton = el('button', {
     class: 'mic',
     type: 'button',
-    'aria-label': 'Photograph a nutrition label',
-    onclick: () => {
-      if (!isConfigured(aiConfig())) {
-        return respond(
-          noticeCard(
-            'Reading a label photo uses AI lookup, which is not set up yet.',
-            el('button', { class: 'btn', type: 'button', text: 'Set up AI lookup', onclick: () => goTo('settings') }),
-          ),
-        );
-      }
-      return photoInput.click();
-    },
+    'aria-label': 'Read a nutrition label from a photo',
+    onclick: () => (needsAi('Reading a label photo') ? undefined : showPhotoChoices()),
   });
   cameraButton.innerHTML = CAMERA_ICON; // static markup defined above
   const responseBox = el('div');
@@ -121,12 +123,35 @@ export function createTodayView(context) {
       input,
       micButton,
       cameraButton,
-      photoInput,
+      cameraInput,
+      libraryInput,
+    ),
+    el(
+      'div',
+      { class: 'tool-row' },
+      iconButton(PLUS_ICON, 'Quick entry', () => openQuickEntry()),
+      iconButton(CHAT_ICON, 'Ask AI', () => goTo('chat')),
     ),
     responseBox,
     entriesBox,
     sheetHost,
   );
+
+  function iconButton(icon, label, onclick) {
+    const iconNode = el('span', { class: 'tool-icon' });
+    iconNode.innerHTML = icon; // static markup defined above
+    return el('button', { class: 'btn small tool', type: 'button', onclick }, iconNode, label);
+  }
+
+  // Paste a picture anywhere on Today (⌘V on a Mac, or Paste in the text field
+  // on a phone) to read it as a label. A chat box handles its own pastes.
+  document.addEventListener('paste', (event) => {
+    if (!root.isConnected || event.defaultPrevented || sheetHost.firstChild) return;
+    const file = imageFromClipboard(event.clipboardData);
+    if (!file) return;
+    event.preventDefault();
+    if (!needsAi('Reading a pasted label')) readLabelPhoto(file);
+  });
 
   // Voice and typed text go through the same handleCommand pipeline.
   const voice = createVoice({
@@ -197,10 +222,12 @@ export function createTodayView(context) {
     );
   }
 
-  async function refresh() {
+  async function refresh(params) {
     day = foodDayKey();
     [foods, entries] = await Promise.all([store.listFoods(), store.listEntriesForDay(day)]);
     render();
+    // Values handed over from the Chat screen open in Quick entry to check.
+    if (params?.quickEntry) openQuickEntry({ values: params.quickEntry });
     renderBackupStatus(await backupStatus(context));
   }
 
@@ -287,6 +314,56 @@ export function createTodayView(context) {
   }
 
   const aiConfig = () => getSettings().ai;
+
+  /** True (and says so, with a way to Settings) when AI is needed but not set up. */
+  function needsAi(what) {
+    if (isConfigured(aiConfig())) return false;
+    respond(
+      noticeCard(
+        `${what} uses AI lookup, which is not set up yet.`,
+        el('button', { class: 'btn', type: 'button', text: 'Set up AI lookup', onclick: () => goTo('settings') }),
+      ),
+    );
+    return true;
+  }
+
+  /** Camera, photo library, or the clipboard. */
+  function showPhotoChoices() {
+    respond(
+      el(
+        'div',
+        { class: 'card' },
+        el('div', { class: 'card-head' }, el('h2', { text: 'Label photo' }), el('button', { class: 'btn small', type: 'button', text: 'Close', onclick: () => respond() })),
+        el('p', { class: 'muted small-text', text: 'Type the amount and name first (“2 eggo waffles”) and they are used too. You can also paste a picture straight into the text field.' }),
+        el('button', { class: 'btn primary', type: 'button', text: 'Take a photo', onclick: () => cameraInput.click() }),
+        el(
+          'div',
+          { class: 'row' },
+          el('button', { class: 'btn', type: 'button', text: 'Choose a photo', onclick: () => libraryInput.click() }),
+          el('button', { class: 'btn', type: 'button', text: 'Paste image', onclick: pasteFromClipboard }),
+        ),
+      ),
+    );
+    responseBox.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  /** The Paste button: read an image from the clipboard (the browser may ask first). */
+  async function pasteFromClipboard() {
+    let file = null;
+    try {
+      for (const item of await navigator.clipboard.read()) {
+        const type = item.types.find((t) => t.startsWith('image/'));
+        if (type) {
+          file = new File([await item.getType(type)], 'pasted', { type });
+          break;
+        }
+      }
+    } catch {
+      // Not allowed, or not supported: the message below explains the other way.
+    }
+    if (file) return readLabelPhoto(file);
+    return respond(noticeCard('No picture was found on the clipboard. Copy an image first, or press and hold in the text field and choose Paste (⌘V on a Mac).'));
+  }
   const usdaConfig = () => getSettings().usda;
   let aiAbort = null;
 
@@ -350,6 +427,11 @@ export function createTodayView(context) {
   }
 
   function showChoices(command, matches, heading) {
+    // After Return, the list can be passed over for USDA, then AI.
+    const further = heading && [
+      usdaConfigured(usdaConfig()) && el('button', { class: 'btn', type: 'button', text: 'None of these: search USDA', onclick: () => searchUsda(command) }),
+      isConfigured(aiConfig()) && el('button', { class: 'btn', type: 'button', text: 'None of these: ask AI', onclick: () => lookUpWithAi(command) }),
+    ];
     respond(
       el(
         'div',
@@ -373,6 +455,7 @@ export function createTodayView(context) {
             ),
           ),
         ),
+        further,
       ),
     );
   }
@@ -388,6 +471,7 @@ export function createTodayView(context) {
           text: 'Enter the values myself',
           onclick: () => goTo('foods', { newName: command.food }),
         }),
+        el('button', { class: 'btn', type: 'button', text: 'Quick entry (log once)', onclick: () => openQuickEntry({ name: command.food }) }),
         !isConfigured(aiConfig()) &&
           !usdaConfigured(usdaConfig()) &&
           el('button', { class: 'btn', type: 'button', text: 'Set up food lookup', onclick: () => goTo('settings') }),
@@ -516,13 +600,29 @@ export function createTodayView(context) {
     const typed = parseInput(input.value);
     const said = typed.type === 'log' ? typed : { type: 'log', amount: null, unit: null, food: '' };
     let lookup;
+    let photo = null;
     try {
       lookup = await withAi('Reading the label…', async (deps) => {
-        const photo = await photoToDataUrl(file);
+        photo = await photoToDataUrl(file);
         return { ...(await readLabel(aiConfig(), photo, said.food, deps)), photo };
       });
     } catch (error) {
       if (error.kind === 'cancelled') return respond();
+      // Not a label (a plate of food, say): offer to talk it through from the picture.
+      if (error.notLabel && photo) {
+        return respond(
+          noticeCard(
+            "That doesn't look like a nutrition label.",
+            el('button', {
+              class: 'btn primary',
+              type: 'button',
+              text: 'Estimate it from the photo with AI',
+              onclick: () => openQuickEntry({ name: said.food, photo }),
+            }),
+            el('button', { class: 'btn', type: 'button', text: 'Close', onclick: () => respond() }),
+          ),
+        );
+      }
       return respond(noticeCard(error.kind ? error.message : 'That photo could not be opened. Try taking it again.'));
     }
 
@@ -574,15 +674,19 @@ export function createTodayView(context) {
    * converted to grams.
    */
   function showConfirm(lookup, command, asked, note) {
-    const origin = lookup.photo ? 'label' : lookup.ref ? 'usda' : 'ai';
+    const looked = lookup.photo ? 'label' : lookup.ref ? 'usda' : 'ai';
     respond(
       createConfirmCard({
         lookup,
         command: asked,
         note,
+        // An AI answer opens with the chat ready, to tune it before logging.
+        assistant: refineChat(),
+        assistantOpen: looked === 'ai',
         onCancel: () => respond(),
         onLogSave: async (result) => {
           // Confirmed by me: saved to my foods with where it came from, and what I said as an alias.
+          const origin = result.fromChat ? 'ai' : looked;
           let name = result.name;
           if (foods.some((f) => f.name.trim().toLowerCase() === name.toLowerCase())) name = `${name} (${origin === 'ai' ? 'AI' : origin === 'usda' ? 'USDA' : 'label'})`;
           const alias = !command.food || command.food.toLowerCase() === name.toLowerCase() ? [] : [command.food];
@@ -595,7 +699,7 @@ export function createTodayView(context) {
           // when any of its values is an AI estimate.
           clearInput();
           await saveNewEntry(
-            { id: null, name: result.name, source: origin, phosphate_additives: result.food.phosphate_additives },
+            { id: null, name: result.name, source: result.fromChat ? 'ai' : looked, phosphate_additives: result.food.phosphate_additives },
             { ...result, ts: Date.now() },
             result.estimated,
           );
@@ -603,6 +707,59 @@ export function createTodayView(context) {
       }),
     );
     responseBox.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+
+  /**
+   * The AI chat that sits in a confirm card and can fill its fields, or null
+   * without AI. `first` is sent straight away (a photo of a meal, say).
+   */
+  function refineChat(first) {
+    if (!isConfigured(aiConfig())) return null;
+    return ({ snapshot, apply }) =>
+      createChatPanel({
+        getConfig: aiConfig,
+        systemPrompt: () => refinePrompt(snapshot()),
+        placeholder: 'e.g. turkey, swiss and mustard on 2 slices of rye',
+        hint: 'Tell the AI what is in it, the brand or the size. It explains its numbers, and one tap puts them in the fields above.',
+        valuesLabel: 'Fill in these values',
+        onValues: apply,
+        first,
+      });
+  }
+
+  /**
+   * Quick entry: type the totals for a one-off meal, or work them out with the
+   * AI chat. `values` (from the Chat screen) are put in to check; `photo` (a
+   * picture that wasn't a label) starts the chat with it.
+   */
+  function openQuickEntry({ name = '', values = null, photo = null } = {}) {
+    const first = photo ? { text: `This is a photo of what I ate${name ? ` (${name})` : ''}. What is it, and what are its values?`, image: photo } : null;
+    const card = createConfirmCard({
+      lookup: blankLookup(name),
+      command: { type: 'log', amount: 1, unit: 'each', food: name },
+      manual: true,
+      assistant: refineChat(first),
+      assistantOpen: Boolean(photo),
+      onCancel: () => respond(),
+      onLogOnce: async (result) => {
+        clearInput();
+        await saveNewEntry(
+          { id: null, name: result.name, source: result.fromChat ? 'ai' : 'me', phosphate_additives: result.food.phosphate_additives },
+          { ...result, ts: Date.now() },
+          result.estimated,
+        );
+      },
+      onLogSave: async (result) => {
+        let foodName = result.name;
+        if (foods.some((f) => f.name.trim().toLowerCase() === foodName.toLowerCase())) foodName = `${foodName} (${result.fromChat ? 'AI' : 'quick'})`;
+        const food = await store.putFood({ ...result.food, name: foodName, aliases: [], source: result.fromChat ? 'ai-confirmed' : 'me' });
+        clearInput();
+        await saveNewEntry(food, { ...result, ts: Date.now() });
+      },
+    });
+    if (values) card.applyValues(values);
+    respond(card);
+    card.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
 
   function showRemaining() {
