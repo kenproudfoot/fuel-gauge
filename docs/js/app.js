@@ -69,7 +69,7 @@ async function boot() {
 
   tabs.addEventListener('click', (event) => {
     const button = event.target.closest('button[data-view]');
-    if (button) goTo(button.dataset.view);
+    if (button) goTo(button.dataset.view, { fromTab: true });
   });
 
   // There is no background process: past days are filed whenever the app is

@@ -54,7 +54,7 @@ The screenshots use made-up demo data.
 </tr>
 <tr>
 <td valign="top"><b>History.</b> Each day is filed at 2 AM with its final chart, any limits it went over, and the weekly calorie average.</td>
-<td valign="top"><b>A past day.</b> The chart and every entry, with buttons to save the chart image or share a text log.</td>
+<td valign="top"><b>A past day.</b> The chart and every entry, with buttons to save the chart image or share a text log. <b>Add or change food</b> opens the day to fix it.</td>
 <td valign="top"><b>My foods.</b> Saved foods log instantly, with no network needed. The list imports and exports as a plain-text file.</td>
 </tr>
 </table>
@@ -163,6 +163,17 @@ The model ends a reply that has numbers with a fenced `values` JSON block,
 which the app reads and validates (`docs/js/chat.js`). Chats can include a
 photo, attached or pasted. They are not stored and are never in a backup. Like
 every other AI call, a reply that strays into insulin or dosing is replaced.
+
+## Fixing a past day
+
+Forgot to log dinner? In **History**, open the day and tap **Add or change
+food**, or use **Add food to a past day** under the list for a day with nothing
+logged. Today then shows that day with a yellow **Changing …** bar: everything
+logged there (typed, spoken, a label photo, Quick entry, the AI chat) goes on
+that day at the time set in the bar, which starts at the end of the eating
+window. Press and hold an entry to change or delete it. After each change, the
+day's History record, text log and chart image are filed again. **Done** goes
+back to the day in History, and the Today tab goes back to today.
 
 ## USDA lookup
 

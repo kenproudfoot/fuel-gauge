@@ -2,7 +2,7 @@
 
 import { el, parseNumber, toast, hideToast, onLongPress, deliverFile } from './dom.js';
 import { buildDaySummary } from '../history.js';
-import { dayImageFile } from './finalize.js';
+import { dayImageFile, finalizeDay } from './finalize.js';
 import { runBackup, backupStatus } from './backupUi.js';
 import {
   NUTRIENTS,
@@ -48,6 +48,9 @@ export function createTodayView(context) {
   let foods = [];
   let entries = [];
   let day = foodDayKey();
+  // A past food day opened from History to add or fix entries; null = today.
+  let pastDay = null;
+  let pastTime = null; // "HH:MM" that new entries on a past day are filed at
 
   // Fixed skeleton, so re-rendering never takes focus away from the text field.
   const trendButton = el('button', { class: 'trend', type: 'button', 'aria-label': 'Trend' });
@@ -64,6 +67,7 @@ export function createTodayView(context) {
     trendButton,
   );
   const statusRow = el('div', { class: 'status-row' });
+  const pastBox = el('div');
   const nudgeBox = el('div');
   const chartBox = el('div', { class: 'chart' });
   const carbsBox = el('div');
@@ -108,6 +112,7 @@ export function createTodayView(context) {
     { class: 'view' },
     header,
     statusRow,
+    pastBox,
     nudgeBox,
     chartBox,
     carbsBox,
@@ -223,18 +228,58 @@ export function createTodayView(context) {
   }
 
   async function refresh(params) {
-    day = foodDayKey();
+    // From History: { day } opens a past day. The Today tab goes back to today.
+    if (params?.day !== undefined || params?.fromTab) {
+      const asked = params.fromTab ? null : params.day;
+      if (asked !== pastDay) {
+        pastDay = asked && asked < foodDayKey() ? asked : null;
+        pastTime = null;
+        respond();
+      }
+    }
+    day = pastDay || foodDayKey();
     [foods, entries] = await Promise.all([store.listFoods(), store.listEntriesForDay(day)]);
+    // A past day's History record is re-filed after every change.
+    if (pastDay && params?.changed) await finalizeDay(context, pastDay);
     render();
+    renderPastBanner();
     // Values handed over from the Chat screen open in Quick entry to check.
     if (params?.quickEntry) openQuickEntry({ values: params.quickEntry });
     renderBackupStatus(await backupStatus(context));
   }
 
+  /** When new entries go on a past day: the time picked here, else the end of the eating window. */
+  function entryTime() {
+    if (!pastDay) return Date.now();
+    return timestampInFoodDay(pastDay, pastTime || getSettings().eatingWindow.end || '20:00');
+  }
+
+  /** The yellow bar that says a past day is being changed, with its time and a way back. */
+  function renderPastBanner() {
+    header.hidden = Boolean(pastDay);
+    if (!pastDay) return pastBox.replaceChildren();
+    const time = el('input', { class: 'big-input', type: 'time', value: pastTime || getSettings().eatingWindow.end || '20:00', 'aria-label': 'Time for new entries' });
+    time.addEventListener('change', () => (pastTime = time.value || null));
+    pastBox.replaceChildren(
+      el(
+        'div',
+        { class: 'past-banner' },
+        el(
+          'div',
+          { class: 'card-head' },
+          el('strong', { text: `Changing ${formatDayKey(pastDay)}` }),
+          el('button', { class: 'btn small', type: 'button', text: 'Done', onclick: () => goTo('history', { day: pastDay }) }),
+        ),
+        el('label', { class: 'past-time' }, el('span', { text: 'New entries at' }), time),
+        el('p', { class: 'small-text', text: 'Anything logged now goes on this day. Press and hold an entry to fix it.' }),
+      ),
+    );
+  }
+
   /** Backup age in the status row, and a gentle yellow nudge once it is overdue. */
   function renderBackupStatus(status) {
     statusRow.replaceChildren(
-      el('span', { text: `Food day: ${formatDayKey(day)}` }),
+      el('span', { text: `${pastDay ? 'Past day' : 'Food day'}: ${formatDayKey(day)}` }),
       el('button', { class: 'status-link', type: 'button', text: status.label, onclick: () => goTo('settings') }),
     );
     if (!status.due) return nudgeBox.replaceChildren();
@@ -295,7 +340,7 @@ export function createTodayView(context) {
     return el(
       'div',
       { class: 'card carbs-card' },
-      row('Carbs today', formatCarbTotal(totals)),
+      row(pastDay ? 'Carbs that day' : 'Carbs today', formatCarbTotal(totals)),
       lastEntry && row('Last entry', formatCarbs(lastEntry.nutrients.effective_carbs_g), lastEntry.foodName),
       el('button', { class: 'status-link save-image', type: 'button', text: 'Save chart image', onclick: (e) => saveChartImage(e.currentTarget) }),
     );
@@ -695,7 +740,7 @@ export function createTodayView(context) {
           const alias = !command.food || command.food.toLowerCase() === name.toLowerCase() ? [] : [command.food];
           const food = await store.putFood({ ...result.food, name, aliases: alias, source: `${origin}-confirmed` });
           clearInput();
-          await saveNewEntry(food, { ...result, ts: Date.now() });
+          await saveNewEntry(food, { ...result, ts: entryTime() });
         },
         onLogOnce: async (result) => {
           // Logged without saving the food: the entry stays marked estimated
@@ -703,7 +748,7 @@ export function createTodayView(context) {
           clearInput();
           await saveNewEntry(
             { id: null, name: result.name, source: result.fromChat ? 'ai' : looked, phosphate_additives: result.food.phosphate_additives },
-            { ...result, ts: Date.now() },
+            { ...result, ts: entryTime() },
             result.estimated,
           );
         },
@@ -748,7 +793,7 @@ export function createTodayView(context) {
         clearInput();
         await saveNewEntry(
           { id: null, name: result.name, source: result.fromChat ? 'ai' : 'me', phosphate_additives: result.food.phosphate_additives },
-          { ...result, ts: Date.now() },
+          { ...result, ts: entryTime() },
           result.estimated,
         );
       },
@@ -757,7 +802,7 @@ export function createTodayView(context) {
         if (foods.some((f) => f.name.trim().toLowerCase() === foodName.toLowerCase())) foodName = `${foodName} (${result.fromChat ? 'AI' : 'quick'})`;
         const food = await store.putFood({ ...result.food, name: foodName, aliases: [], source: result.fromChat ? 'ai-confirmed' : 'me' });
         clearInput();
-        await saveNewEntry(food, { ...result, ts: Date.now() });
+        await saveNewEntry(food, { ...result, ts: entryTime() });
       },
     });
     if (values) card.applyValues(values);
@@ -830,7 +875,7 @@ export function createTodayView(context) {
       unit: command.unit,
       servings,
       nutrients: scaleFood(food, servings),
-      ts: Date.now(),
+      ts: entryTime(),
     });
   }
 
@@ -851,7 +896,7 @@ export function createTodayView(context) {
       deleted: false,
       history: [],
     });
-    await refresh();
+    await refresh({ changed: true });
     toast(`Logged ${formatAmount(entry.amount, entry.unit)} ${entry.foodName}`, {
       ms: UNDO_MS,
       actionLabel: 'Undo',
@@ -883,7 +928,7 @@ export function createTodayView(context) {
       units.map((u) => el('option', { value: u, text: u, selected: u === unit })),
     );
     // Time eaten, so something logged at night can be filed under this morning.
-    const timeInput = el('input', { class: 'big-input', type: 'time', value: timeOfDay(ts ?? Date.now()) });
+    const timeInput = el('input', { class: 'big-input', type: 'time', value: timeOfDay(ts ?? entryTime()) });
     let timeTouched = false;
     const preview = el('p', { class: 'preview' });
     const notice = el('div', { class: 'notice', hidden: true });
@@ -919,7 +964,7 @@ export function createTodayView(context) {
           const result = read();
           if (result.error) return;
           // An untouched time keeps the original moment (or "now" for a new entry).
-          let when = ts ?? Date.now();
+          let when = ts ?? entryTime();
           if (timeTouched) {
             when = timestampInFoodDay(day, timeInput.value);
             if (when == null) {
@@ -1039,7 +1084,7 @@ export function createTodayView(context) {
           });
         }
         closeSheet();
-        await refresh();
+        await refresh({ changed: true });
         if (changed) toast(`Updated ${entry.foodName}`);
       },
       extra: el('button', {
@@ -1060,7 +1105,7 @@ export function createTodayView(context) {
       ...entry,
       history: [...(entry.history || []), { at: Date.now(), action: 'delete' }],
     });
-    await refresh();
+    await refresh({ changed: true });
     toast(`Removed ${entry.foodName}`, {
       ms: offerUndo ? UNDO_MS : 3000,
       actionLabel: offerUndo && 'Undo',
@@ -1069,7 +1114,7 @@ export function createTodayView(context) {
           ...removed,
           history: [...removed.history, { at: Date.now(), action: 'restore' }],
         });
-        await refresh();
+        await refresh({ changed: true });
       },
     });
   }

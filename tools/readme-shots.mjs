@@ -15,6 +15,9 @@ const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chro
   '--headless=new', `--remote-debugging-port=${PORT}`, `--user-data-dir=${profile}`,
   '--no-first-run', '--window-size=390,844', 'about:blank',
 ], { stdio: 'ignore' });
+// Never leave a headless Chrome behind, even when a step fails.
+process.on('exit', () => chrome.kill());
+process.on('uncaughtException', (error) => { console.error(error); process.exit(1); });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 let target;
@@ -64,6 +67,7 @@ const helpers = `
   const click = (sel, text) => { const n = [...document.querySelectorAll(sel)].find((x) => !text || x.textContent.includes(text)); if (!n) throw new Error('no ' + sel + ' ' + text); n.click(); };
   const cmd = async (text, ms = 900) => { const i = document.querySelector('.command-input'); i.value = text; i.dispatchEvent(new Event('input', { bubbles: true })); await wait(50); i.form.requestSubmit(); await wait(ms); };
   const hideToast = () => { document.getElementById('toast').hidden = true; };
+  const until = async (sel, ms = 8000) => { for (let t = 0; t < ms && !document.querySelector(sel); t += 100) await wait(100); if (!document.querySelector(sel)) throw new Error('timed out waiting for ' + sel); };
   const top = (sel) => window.scrollTo(0, document.querySelector(sel).getBoundingClientRect().top + window.scrollY - 8);
 `;
 // Demo foods: [name, amount, unit, kcal, protein, Na, K, P, effective carbs]
@@ -195,12 +199,12 @@ await evaluate(`${helpers} click('.confirm button', 'Cancel'); await wait(300);`
 await evaluate(`${helpers} hideToast(); const i = document.querySelector('.command-input'); i.value = ''; click('.mic[aria-label^="Read"]'); await wait(300); top('.command');`);
 await snap('photo-choices.png');
 await evaluate(`${helpers} click('.card button', 'Close'); click('.tool', 'Quick entry'); await wait(300); click('.confirm button', 'Describe it to AI'); await wait(200);
-  document.querySelector('.chat-box').value = 'turkey and swiss on rye with mustard'; click('.chat-panel button', 'Send'); await wait(800);
+  document.querySelector('.chat-box').value = 'turkey and swiss on rye with mustard'; click('.chat-panel button', 'Send'); await until('.chat-values');
   click('.chat-values button', 'Fill in'); await wait(600); hideToast();`);
 await size(1700); await sleep(300); await evaluate(`${helpers} top('.confirm');`);
 await snap('quick-chat.png'); await size(844); await sleep(300);
 await evaluate(`${helpers} click('.confirm button', 'Cancel'); await wait(200); click('.tool', 'Ask AI'); await wait(400);
-  document.querySelector('.chat-box').value = 'How much phosphorus is in a slice of cheddar?'; click('.chat-panel button', 'Send'); await wait(800); window.scrollTo(0, 0);`);
+  document.querySelector('.chat-box').value = 'How much phosphorus is in a slice of cheddar?'; click('.chat-panel button', 'Send'); await until('.chat-values'); window.scrollTo(0, 0);`);
 await snap('ask-ai.png');
 await evaluate(`${helpers} click('button', '‹ Today'); await wait(400);`);
 

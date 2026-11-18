@@ -27,7 +27,8 @@ export async function dayImageFile(summary, settings, storedPng) {
   return new File([blob], `${dayFileStem(summary.day)}.png`, { type: 'image/png' });
 }
 
-async function finalizeDay({ store, getSettings }, day) {
+/** File (or re-file, after a past day was changed) one day's summary, text log and chart PNG. */
+export async function finalizeDay({ store, getSettings }, day) {
   const settings = getSettings();
   const entries = await store.listEntriesForDay(day);
   const summary = buildDaySummary(day, entries, settings.targets);

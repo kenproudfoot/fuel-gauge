@@ -7,16 +7,23 @@ import { renderChartSVG } from '../chart.js';
 import { formatLongDay, summaryCarbs, dayFileStem } from '../history.js';
 import { finalizePastDays, dayImageFile } from './finalize.js';
 import { weeklyCalories, weeklyLabel } from '../trend.js';
-import { foodDayKey } from '../day.js';
+import { foodDayKey, addDays } from '../day.js';
 
 export function createHistoryView(context) {
-  const { store, getSettings } = context;
+  const { store, getSettings, goTo } = context;
   const root = el('section', { class: 'view' });
 
-  async function refresh() {
+  /** params.day (back from changing a day on Today) reopens that day. */
+  async function refresh(params) {
     await finalizePastDays(context);
-    renderList((await store.listSummaries()).filter((s) => s.entryCount > 0));
+    const summaries = (await store.listSummaries()).filter((s) => s.entryCount > 0);
+    const back = params?.day && summaries.find((s) => s.day === params.day);
+    if (back) return renderDay(back);
+    return renderList(summaries);
   }
+
+  /** Open a past day on Today, where anything logged goes on that day. */
+  const changeDay = (day) => goTo('today', { day });
 
   function chartNode(summary, className) {
     const settings = getSettings();
@@ -59,7 +66,17 @@ export function createHistoryView(context) {
         ),
       );
     }
-    root.replaceChildren(card);
+    // A day with nothing logged has no row above; pick it by date instead.
+    const yesterday = addDays(foodDayKey(), -1);
+    const picker = el('input', { class: 'big-input', type: 'date', value: yesterday, max: yesterday, 'aria-label': 'Day to add food to' });
+    const other = el(
+      'div',
+      { class: 'card' },
+      el('h2', { text: 'Add food to a past day' }),
+      el('p', { class: 'muted small-text', text: 'Forgot to log something? Pick the day, then log it as usual. Days listed above can also be opened and changed.' }),
+      el('div', { class: 'row' }, picker, el('button', { class: 'btn', type: 'button', text: 'Open', onclick: () => picker.value && picker.value <= yesterday && changeDay(picker.value) })),
+    );
+    root.replaceChildren(card, other);
   }
 
   async function renderDay(summary) {
@@ -104,6 +121,7 @@ export function createHistoryView(context) {
       el('h2', { class: 'day-title', text: formatLongDay(summary.day) }),
       chartNode(summary, 'chart'),
       el('p', { class: 'carbs-line' }, `Carbs: ${summaryCarbs(summary)}`, exceededNode(summary) && ' · ', exceededNode(summary)),
+      el('button', { class: 'btn primary change-day', type: 'button', text: 'Add or change food', onclick: () => changeDay(summary.day) }),
       el('div', { class: 'row actions' }, saveImage, shareText),
       list,
     );

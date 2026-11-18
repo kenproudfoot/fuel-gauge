@@ -498,3 +498,19 @@ input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 .chat-attach img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; }
 .chat-head { margin-bottom: 14px; }
 .confirm-fields { display: flex; flex-direction: column; gap: 10px; scroll-margin-top: 12px; }
+
+/* Changing a past day on Today: yellow (a heads-up, never red) */
+.past-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  color: var(--notice);
+  border: 1px solid var(--notice);
+  border-radius: 12px;
+}
+.past-banner p { margin: 0; color: var(--text); }
+.past-time { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--text); }
+.past-time .big-input { width: auto; min-height: 44px; }
+.change-day { width: 100%; margin-bottom: 10px; }
